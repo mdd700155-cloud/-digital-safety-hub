@@ -1,17 +1,17 @@
+import { ScamChecker } from "@/features/scam-check/ScamChecker";
 import { PageContainer } from "@/components/layout/PageContainer";
 
 export default function CheckPage() {
   return (
-    <PageContainer className="py-24">
-      <div className="flex flex-col items-center justify-center text-center space-y-4">
+    <PageContainer className="py-12 md:py-24 max-w-4xl">
+      <div className="flex flex-col text-center space-y-4 mb-10">
         <h1 className="text-4xl font-bold tracking-tight">Scam Check</h1>
-        <p className="text-xl text-muted-foreground max-w-2xl">
-          Check suspicious links, messages, screenshots, and QR codes.
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Analyze suspicious content before you act. We check against known threat indicators to keep you safe.
         </p>
-        <div className="mt-8 p-8 border border-dashed rounded-lg bg-muted/50 text-muted-foreground">
-          Coming soon.
-        </div>
       </div>
+      
+      <ScamChecker />
     </PageContainer>
   );
 }

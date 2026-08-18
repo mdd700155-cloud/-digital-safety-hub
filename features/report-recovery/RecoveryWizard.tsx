@@ -4,10 +4,12 @@ import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { recoveryChecklists } from "@/lib/mock/recoveryData";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronRight, ClipboardCopy, CheckCircle2, ShieldAlert } from "lucide-react";
+import { ClipboardCopy, CheckCircle2, ShieldAlert, Check, FileText, Phone, ExternalLink } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { CategoryCombobox } from "./CategoryCombobox";
 
 interface IncidentData {
   category: string;
@@ -21,6 +23,12 @@ interface IncidentSummary extends IncidentData {
   steps: string[];
   generatedAt: string;
 }
+
+const steps = [
+  { label: "Select Type" },
+  { label: "Checklist & Form" },
+  { label: "Summary" },
+];
 
 export function RecoveryWizard() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -100,46 +108,52 @@ export function RecoveryWizard() {
       <div className="flex items-center justify-between mb-8 px-2 relative">
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-muted -z-10 rounded-full" />
         <div className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary -z-10 rounded-full transition-all duration-300" style={{ width: step === 1 ? "0%" : step === 2 ? "50%" : "100%" }} />
-        
-        {[1, 2, 3].map((s) => (
-          <div key={s} className={`flex flex-col items-center bg-background px-2 ${step >= s ? "text-primary" : "text-muted-foreground"}`}>
-            <div className={`h-8 w-8 rounded-full flex items-center justify-center font-bold border-2 transition-colors ${step >= s ? "border-primary bg-primary text-primary-foreground" : "border-muted bg-background"}`}>
-              {s}
+
+        {steps.map((s, i) => {
+          const num = (i + 1) as 1 | 2 | 3;
+          const reached = step >= num;
+          return (
+            <div key={num} className={cn("flex flex-col items-center bg-background px-2", reached ? "text-primary" : "text-muted-foreground")}>
+              <div className={cn(
+                "h-9 w-9 rounded-full flex items-center justify-center font-bold border-2 transition-colors shadow-sm",
+                reached
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-muted bg-background text-muted-foreground"
+              )}>
+                {reached && step > num ? <Check className="h-4 w-4" /> : num}
+              </div>
+              <span className="text-xs font-medium mt-2 hidden sm:block">
+                {s.label}
+              </span>
             </div>
-            <span className="text-xs font-medium mt-2 hidden sm:block">
-              {s === 1 ? "Select Type" : s === 2 ? "Checklist & Form" : "Summary"}
-            </span>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {step === 1 && (
-        <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <CardHeader>
+        <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-soft overflow-visible">
+          <CardHeader className="border-b border-border/40 bg-muted/30">
             <CardTitle className="text-2xl flex items-center">
               <ShieldAlert className="h-6 w-6 mr-2 text-primary" />
               What kind of incident occurred?
             </CardTitle>
-            <CardDescription>Select the category that best matches your situation to get tailored recovery steps.</CardDescription>
+            <CardDescription>Search or pick the category that best matches your situation to get tailored recovery steps.</CardDescription>
           </CardHeader>
-          <CardContent className="grid sm:grid-cols-2 gap-3">
-            {recoveryChecklists.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => handleCategorySelect(item.id, item.category)}
-                className="flex items-center justify-between p-4 border rounded-lg text-left hover:border-primary hover:bg-primary/5 transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <span className="font-medium">{item.category}</span>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              </button>
-            ))}
+          <CardContent>
+            <CategoryCombobox
+              options={recoveryChecklists.map((item) => ({
+                id: item.id,
+                category: item.category,
+              }))}
+              onSelect={handleCategorySelect}
+            />
           </CardContent>
         </Card>
       )}
 
       {step === 2 && (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-          <Card>
+          <Card className="shadow-soft">
             <CardHeader className="bg-primary/5 border-b">
               <CardTitle className="text-xl">Immediate Action Steps</CardTitle>
               <CardDescription>Follow these steps immediately to mitigate further damage.</CardDescription>
@@ -151,37 +165,40 @@ export function RecoveryWizard() {
                     <div className="flex-shrink-0 mt-0.5">
                       <CheckCircle2 className="h-5 w-5 text-primary" />
                     </div>
-                    <span className="text-foreground/90">{step}</span>
+                    <span className="text-foreground/90 leading-relaxed">{step}</span>
                   </li>
                 ))}
               </ul>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="shadow-soft">
             <form onSubmit={handleFormSubmit}>
-              <CardHeader>
-                <CardTitle>Prepare an Incident Summary (Optional)</CardTitle>
+              <CardHeader className="border-b border-border/40 bg-muted/30">
+                <CardTitle className="flex items-center text-xl">
+                  <FileText className="mr-2 h-5 w-5 text-primary" />
+                  Prepare an Incident Summary (Optional)
+                </CardTitle>
                 <CardDescription>
                   Fill out what you can. This will organize the details locally on your device so you can easily copy and paste them when reporting to your bank or authorities.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 pt-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="date">Date of Incident</Label>
-                    <Input 
-                      id="date" 
-                      type="date" 
+                    <Input
+                      id="date"
+                      type="date"
                       value={formData.date}
                       onChange={e => setFormData({...formData, date: e.target.value})}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="amount">Amount Lost (if any)</Label>
-                    <Input 
-                      id="amount" 
-                      placeholder="e.g. ₹5000" 
+                    <Input
+                      id="amount"
+                      placeholder="e.g. ₹5000"
                       value={formData.amount}
                       onChange={e => setFormData({...formData, amount: e.target.value})}
                     />
@@ -189,28 +206,28 @@ export function RecoveryWizard() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="platform">Platform / Phone Number / URL involved</Label>
-                  <Input 
-                    id="platform" 
-                    placeholder="Where did this happen?" 
+                  <Input
+                    id="platform"
+                    placeholder="Where did this happen?"
                     value={formData.platform}
                     onChange={e => setFormData({...formData, platform: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="desc">Brief Description</Label>
-                  <Textarea 
-                    id="desc" 
-                    placeholder="What happened? Keep it brief and factual." 
+                  <Textarea
+                    id="desc"
+                    placeholder="What happened? Keep it brief and factual."
                     className="resize-none"
                     value={formData.description}
                     onChange={e => setFormData({...formData, description: e.target.value})}
                   />
                 </div>
-                <div className="p-3 bg-muted/50 rounded text-xs text-muted-foreground border">
+                <div className="p-3.5 bg-warning/5 rounded-lg text-xs text-warning-foreground border border-warning/20">
                   <strong>Privacy Note:</strong> This information never leaves your device. It is used solely to generate a text summary for you to copy.
                 </div>
               </CardContent>
-              <CardFooter className="flex justify-between border-t pt-6">
+              <CardFooter className="flex justify-between border-t pt-6 bg-muted/10">
                 <Button type="button" variant="ghost" onClick={() => setStep(1)}>Back</Button>
                 <Button type="submit">Generate Summary</Button>
               </CardFooter>
@@ -220,12 +237,15 @@ export function RecoveryWizard() {
       )}
 
       {step === 3 && (
-        <Card className="animate-in fade-in slide-in-from-right-4 duration-500">
-          <CardHeader>
-            <CardTitle>Summary Ready</CardTitle>
+        <Card className="animate-in fade-in slide-in-from-right-4 duration-500 shadow-soft">
+          <CardHeader className="border-b border-border/40 bg-muted/30">
+            <CardTitle className="flex items-center text-xl">
+              <CheckCircle2 className="mr-2 h-5 w-5 text-success" />
+              Summary Ready
+            </CardTitle>
             <CardDescription>Evidence summary generated locally. Download or copy before reporting.</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
               <div>
                 <p className="font-semibold">{incidentSummary?.category}</p>
@@ -236,7 +256,7 @@ export function RecoveryWizard() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col sm:flex-row justify-between gap-4 border-t pt-6 bg-muted/10">
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={() => setStep(2)}>Edit Details</Button>
               <Button onClick={handleCopy}>
                 <ClipboardCopy className="mr-2 h-4 w-4" />
@@ -248,8 +268,19 @@ export function RecoveryWizard() {
             </div>
 
             <div className="flex gap-2">
-              <a href="tel:1930" className="inline-flex items-center justify-center rounded-md border px-3 py-2">Call 1930</a>
-              <a href="https://cybercrime.gov.in/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-md border px-3 py-2">Report Online</a>
+              <a href="tel:1930" className={cn(buttonVariants({ variant: "destructive", size: "sm" }))}>
+                <Phone className="h-3.5 w-3.5 mr-1.5" />
+                Call 1930
+              </a>
+              <a
+                href="https://cybercrime.gov.in/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+              >
+                Report Online
+                <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
+              </a>
             </div>
           </CardFooter>
         </Card>

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Link as LinkIcon, Image as ImageIcon, QrCode, Loader2, UploadCloud, X } from "lucide-react";
+import { MessageSquare, Link as LinkIcon, Image as ImageIcon, QrCode, Loader2, UploadCloud, X, ShieldCheck } from "lucide-react";
 import { AnalysisResult } from "@/types/analysis";
 import { ResultDisplay } from "./ResultDisplay";
 import { QrScanner } from "./QrScanner";
@@ -102,12 +102,16 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
 
   if (isAnalyzing) {
     return (
-      <Card className="border shadow-sm min-h-[400px] flex items-center justify-center">
-        <div className="flex flex-col items-center space-y-4 text-center p-6">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      <Card className="border shadow-soft min-h-[400px] flex items-center justify-center overflow-hidden">
+        <div className="flex flex-col items-center space-y-5 text-center p-6">
+          <div className="relative">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/10">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          </div>
           <div>
             <h3 className="text-lg font-semibold">Analyzing your submission...</h3>
-            <p className="text-sm text-muted-foreground mt-2 max-w-sm">
+            <p className="text-sm text-muted-foreground mt-2 max-w-sm leading-relaxed">
               Checking against known threat patterns, structural heuristics, and context. This usually takes a few seconds.
             </p>
           </div>
@@ -117,16 +121,19 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
   }
 
   return (
-    <Card className="border shadow-sm">
+    <Card className="border shadow-soft">
       {!compact && (
-        <CardHeader>
-          <CardTitle>What would you like to check?</CardTitle>
+        <CardHeader className="border-b border-border/40 bg-muted/30">
+          <CardTitle className="flex items-center text-xl">
+            <ShieldCheck className="mr-2 h-5 w-5 text-primary" />
+            What would you like to check?
+          </CardTitle>
           <CardDescription>
             Select the type of content you want to analyze for potential threats.
           </CardDescription>
         </CardHeader>
       )}
-      <CardContent className={compact ? "p-4 sm:p-6" : ""}>
+      <CardContent className={compact ? "p-4 sm:p-6" : "pt-6"}>
         <Tabs
           value={activeTab}
           onValueChange={(v) => {
@@ -137,7 +144,7 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
           }}
           className="w-full"
         >
-          <TabsList className="grid grid-cols-4 mb-6">
+          <TabsList className="grid grid-cols-4 mb-6 shadow-sm">
             <TabsTrigger value="message" className="flex items-center justify-center">
               <MessageSquare className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Message</span>
@@ -157,7 +164,10 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
           </TabsList>
 
           {error && (
-            <div className="bg-destructive/10 text-destructive p-3 rounded-md mb-4 text-sm">
+            <div
+              role="alert"
+              className="bg-destructive/10 text-destructive p-3.5 rounded-lg mb-4 text-sm border border-destructive/20"
+            >
               {error}
             </div>
           )}
@@ -169,13 +179,15 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
                 <Textarea
                   id="message"
                   placeholder="Paste the suspicious email, SMS, or WhatsApp message here..."
-                  className="min-h-[150px] resize-none"
+                  className="min-h-[150px] resize-none bg-background"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                 />
-                <p className="text-xs text-muted-foreground flex justify-between">
+                <p className="text-xs text-muted-foreground flex justify-between gap-4">
                   <span>Paste any suspicious message text or SMS.</span>
-                  <span>{inputValue.length} chars</span>
+                  <span className="tabular-nums whitespace-nowrap">
+                    {inputValue.length} chars
+                  </span>
                 </p>
               </div>
             </TabsContent>
@@ -187,7 +199,7 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
                   id="url"
                   type="url"
                   placeholder="https://example.com/..."
-                  className="w-full"
+                  className="w-full bg-background"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                 />
@@ -206,13 +218,22 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
                 onChange={handleImageUpload}
               />
               <div
-                className="border-2 border-dashed rounded-lg p-10 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors cursor-pointer"
+                role="button"
+                tabIndex={0}
+                aria-label="Upload a screenshot"
+                className="border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-center hover:bg-muted/50 hover:border-primary/40 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring"
                 onClick={() => !inputValue && fileInputRef.current?.click()}
+                onKeyDown={(e) => {
+                  if ((e.key === "Enter" || e.key === " ") && !inputValue) {
+                    e.preventDefault();
+                    fileInputRef.current?.click();
+                  }
+                }}
               >
                 {inputValue ? (
                   <div className="flex flex-col items-center">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={inputValue} alt="Uploaded preview" className="max-h-40 rounded mb-4 object-contain" />
+                    <img src={inputValue} alt="Uploaded preview" className="max-h-40 rounded-lg mb-4 object-contain shadow-soft" />
                     <Button
                       type="button"
                       variant="outline"
@@ -228,7 +249,7 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
                   </div>
                 ) : (
                   <>
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4">
+                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4 ring-1 ring-primary/10">
                       <UploadCloud className="h-6 w-6" />
                     </div>
                     <h3 className="font-medium mb-1">Click to upload screenshot</h3>
@@ -239,7 +260,7 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
             </TabsContent>
 
             <TabsContent value="qr" className="space-y-4 mt-0">
-              <div className="border border-border rounded-lg bg-muted/30 p-6">
+              <div className="border border-border rounded-xl bg-muted/30 p-6">
                 {qrScanned ? (
                   <div className="flex flex-col items-center gap-3">
                     <Badge variant="secondary" className="max-w-full truncate text-xs">
@@ -265,6 +286,7 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
                   </Button>
                 )}
                 <Button type="submit" disabled={!inputValue.trim()}>
+                  <ShieldCheck className="h-4 w-4 mr-2" />
                   Analyze Now
                 </Button>
               </div>

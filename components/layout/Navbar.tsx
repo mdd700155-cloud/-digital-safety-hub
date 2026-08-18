@@ -1,30 +1,57 @@
+"use client";
+
 import Link from "next/link";
-import { Shield } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { ShieldCheck } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { PageContainer } from "./PageContainer";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
+
+const navLinks = [
+  { href: "/check", label: "Scam Check" },
+  { href: "/report", label: "Report & Recover" },
+  { href: "/learn", label: "Safety Hub" },
+];
 
 export function Navbar() {
+  const pathname = usePathname();
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <PageContainer>
-        <div className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2">
-            <Shield className="h-6 w-6 text-primary" />
-            <span className="font-bold text-lg hidden sm:inline-block">
+        <div className="flex h-16 items-center justify-between gap-4">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm transition-transform group-hover:scale-105">
+              <ShieldCheck className="h-4.5 w-4.5" />
+            </span>
+            <span className="text-lg font-bold tracking-tight hidden sm:inline-block">
               Digital Safety Hub
             </span>
           </Link>
-          
-          <nav className="flex items-center space-x-6 text-sm font-medium text-muted-foreground">
-            <Link href="/check" className="transition-colors hover:text-foreground">
-              Scam Check
-            </Link>
-            <Link href="/report" className="transition-colors hover:text-foreground">
-              Report & Recover
-            </Link>
-            <Link href="/learn" className="transition-colors hover:text-foreground">
-              Safety Hub
-            </Link>
-          </nav>
+
+          <div className="flex items-center gap-2 sm:gap-6">
+            <nav className="flex items-center gap-1 sm:gap-2 text-sm font-medium text-muted-foreground">
+              {navLinks.map((link) => {
+                const isActive =
+                  pathname === link.href || pathname.startsWith(`${link.href}/`);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={cn(
+                      "rounded-md px-2 py-1.5 transition-colors hover:text-foreground sm:px-3",
+                      isActive &&
+                        "bg-muted text-foreground shadow-sm"
+                    )}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
+            </nav>
+            <div className="h-5 w-px bg-border hidden sm:block" />
+            <ThemeToggle />
+          </div>
         </div>
       </PageContainer>
     </header>

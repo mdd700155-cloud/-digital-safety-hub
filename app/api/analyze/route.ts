@@ -28,6 +28,9 @@ export async function POST(request: Request) {
     let finalWeightedSignals: UrlSignal[] = [];
     let finalThreatIntel: ThreatIntel | undefined = undefined;
     let geminiResult = null;
+    let geminiStatus = "FAILED";
+    let urlhausStatus = "FAILED";
+    let mlStatus = "UNAVAILABLE";
     const urlsToAnalyze: string[] = [];
 
     // 1. Initial Routing and Deterministic Analysis
@@ -52,10 +55,26 @@ export async function POST(request: Request) {
       const [header, base64Data] = content.split(",");
       const mimeType = header.replace("data:", "").replace(";base64", "");
 
-      geminiResult = await analyzeImageWithGemini(base64Data, mimeType);
-
-      if (!geminiResult) {
-        // Fail gracefully instead of crashing
+      try {
+        geminiResult = await analyzeImageWithGemini(base64Data, mimeType);
+        if (!geminiResult) {
+          geminiStatus = "FAILED";
+          console.log("[Security] Gemini analysis: FAILED");
+          // Fail gracefully instead of crashing
+          return NextResponse.json({
+            level: "SAFE",
+            confidence: "LOW",
+            summary: "Image analysis could not be completed. Try checking the URL or message text directly.",
+            warningIndicators: [],
+            recommendations: ["If you suspect this image contains a scam, try extracting the text or URL and checking it separately."],
+            signals: [],
+          });
+        }
+        geminiStatus = "SUCCESS";
+        console.log("[Security] Gemini analysis: SUCCESS");
+      } catch (e) {
+        geminiStatus = "FAILED";
+        console.log("[Security] Gemini analysis: FAILED");
         return NextResponse.json({
           level: "SAFE",
           confidence: "LOW",
@@ -92,7 +111,14 @@ export async function POST(request: Request) {
       // ML-based URL classification (optional signal)
       try {
         const ml = await classifyUrl(targetUrl);
-        if (ml.available && ml.signal) {
+        if (ml && ml.available) {
+          mlStatus = "SUCCESS";
+          console.log("[Security] ML URL classifier: SUCCESS");
+        } else {
+          mlStatus = "UNAVAILABLE";
+          console.log("[Security] ML URL classifier: UNAVAILABLE");
+        }
+        if (ml && ml.signal) {
           finalHeuristicSignals.push(
             `[ML] ${ml.signal} (model v${ml.modelVersion ?? "unknown"})`
           );
@@ -109,27 +135,51 @@ export async function POST(request: Request) {
             });
           }
         }
-      } catch {
+      } catch (e) {
+        mlStatus = "UNAVAILABLE";
+        console.log("[Security] ML URL classifier: UNAVAILABLE");
         // Fail open: missing or broken ML model should not block analysis
       }
 
       // Threat Intel Lookup (only if URL is parseable)
       if (!urlResult.isMalformed && urlResult.normalizedUrl) {
-        const intel = await checkUrlhaus(urlResult.normalizedUrl);
-        if (intel) {
-          finalThreatIntel = intel;
+        try {
+          const intel = await checkUrlhaus(urlResult.normalizedUrl);
+          if (intel) {
+            finalThreatIntel = intel;
+            urlhausStatus = "SUCCESS";
+            console.log("[Security] URLhaus lookup: SUCCESS");
+          } else {
+            urlhausStatus = "FAILED";
+            console.log("[Security] URLhaus lookup: FAILED");
+          }
+        } catch (e) {
+          urlhausStatus = "FAILED";
+          console.log("[Security] URLhaus lookup: FAILED");
         }
       }
     }
 
     // 3. Gemini Contextual Analysis (if not already done via screenshot)
     if (type !== "screenshot") {
-      geminiResult = await analyzeWithGemini(
-        content,
-        type === "url" || (type === "qr" && urlsToAnalyze.length > 0) ? "url" : "message",
-        finalHeuristicSignals,
-        finalThreatIntel?.match
-      );
+      try {
+        geminiResult = await analyzeWithGemini(
+          content,
+          type === "url" || (type === "qr" && urlsToAnalyze.length > 0) ? "url" : "message",
+          finalHeuristicSignals,
+          finalThreatIntel?.match
+        );
+        if (geminiResult) {
+          geminiStatus = "SUCCESS";
+          console.log("[Security] Gemini analysis: SUCCESS");
+        } else {
+          geminiStatus = "FAILED";
+          console.log("[Security] Gemini analysis: FAILED");
+        }
+      } catch (e) {
+        geminiStatus = "FAILED";
+        console.log("[Security] Gemini analysis: FAILED");
+      }
     }
 
     // Fallback if Gemini fails entirely
@@ -152,6 +202,14 @@ export async function POST(request: Request) {
     }
 
     // 4. Aggregation
+    try {
+      console.log(
+        `[Security] Analysis complete | ML: ${mlStatus} | URLhaus: ${urlhausStatus} | Gemini: ${geminiStatus}`
+      );
+    } catch (e) {
+      // ignore logging errors
+    }
+
     const finalResult = aggregateRisk({
       heuristicSignals: finalHeuristicSignals,
       weightedSignals: finalWeightedSignals,

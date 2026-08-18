@@ -17,6 +17,11 @@ interface IncidentData {
   description: string;
 }
 
+interface IncidentSummary extends IncidentData {
+  steps: string[];
+  generatedAt: string;
+}
+
 export function RecoveryWizard() {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
@@ -28,7 +33,7 @@ export function RecoveryWizard() {
     description: "",
   });
   const [copied, setCopied] = useState(false);
-  const [incidentSummary, setIncidentSummary] = useState<any | null>(null);
+  const [incidentSummary, setIncidentSummary] = useState<IncidentSummary | null>(null);
 
   const activeChecklist = recoveryChecklists.find(c => c.id === selectedCategory);
 
@@ -53,9 +58,9 @@ export function RecoveryWizard() {
     setStep(3);
   };
 
-  const generateReportText = (source: any = incidentSummary) => {
+  const generateReportText = (source: IncidentSummary | null = incidentSummary) => {
     if (!source) return '';
-    return `INCIDENT REPORT SUMMARY (Locally Generated)\nDate of Generation: ${new Date(source.generatedAt).toLocaleString()}\n\nCATEGORY: ${source.category}\nINCIDENT DATE: ${source.date || "Not provided"}\nPLATFORM/WEBSITE: ${source.platform || "Not provided"}\nFINANCIAL LOSS: ${source.amount || "None/Not provided"}\n\nDESCRIPTION:\n${source.description || "No description provided."}\n\nRECOMMENDED ACTION STEPS (From Digital Safety Hub):\n${(source.steps || []).map((s: string, i: number) => `${i + 1}. ${s}`).join("\n") || "No steps available."}\n\n--\nNote: This report is generated locally on your device to help you organize your thoughts before speaking to authorities or your bank. It has NOT been submitted to any agency.`;
+    return `INCIDENT REPORT SUMMARY (Locally Generated)\nDate of Generation: ${new Date(source.generatedAt).toLocaleString()}\n\nCATEGORY: ${source.category}\nINCIDENT DATE: ${source.date || "Not provided"}\nPLATFORM/WEBSITE: ${source.platform || "Not provided"}\nFINANCIAL LOSS: ${source.amount || "None/Not provided"}\n\nDESCRIPTION:\n${source.description || "No description provided."}\n\nRECOMMENDED ACTION STEPS (From Digital Safety Hub):\n${(source.steps || []).map((s, i) => `${i + 1}. ${s}`).join("\n") || "No steps available."}\n\n--\nNote: This report is generated locally on your device to help you organize your thoughts before speaking to authorities or your bank. It has NOT been submitted to any agency.`;
   };
 
   const handleCopy = () => {
@@ -67,7 +72,6 @@ export function RecoveryWizard() {
   const handleDownloadTxt = () => {
     if (!incidentSummary) return;
     const text = generateReportText();
-    //@ts-ignore
     import('@/lib/helpers/evidenceExport').then(({ downloadTextFile }) => {
       downloadTextFile(`incident-summary-${new Date().toISOString()}.txt`, text);
     });
@@ -75,7 +79,6 @@ export function RecoveryWizard() {
 
   const handleDownloadJson = () => {
     if (!incidentSummary) return;
-    //@ts-ignore
     import('@/lib/helpers/evidenceExport').then(({ downloadJsonFile }) => {
       downloadJsonFile(`incident-summary-${new Date().toISOString()}.json`, incidentSummary);
     });
@@ -84,7 +87,6 @@ export function RecoveryWizard() {
   const handleDownloadPng = async () => {
     if (!incidentSummary) return;
     const text = generateReportText();
-    //@ts-ignore
     const { renderSummaryAsPng, downloadBlob } = await import('@/lib/helpers/evidenceExport');
     const dataUrl = await renderSummaryAsPng(text, { width: 900 });
     const res = await fetch(dataUrl);

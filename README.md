@@ -1,36 +1,94 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Digital Safety Hub 🛡️
 
-## Getting Started
+Digital Safety Hub is a user-friendly cybersecurity platform that helps people check suspicious links, messages, screenshots, and QR codes, understand why something may be dangerous, and take the right steps if they have been scammed.
 
-First, run the development server:
+The goal is simple:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+> **Check → Understand → Protect → Recover**
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🚀 What Can Digital Safety Hub Do?
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 🔍 Scam Check
 
-## Learn More
+Users can check:
 
-To learn more about Next.js, take a look at the following resources:
+- URLs / website links
+- Suspicious messages
+- Screenshots
+- QR codes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The system analyzes the submitted content and gives a simple result:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- 🟢 **Safe** — No significant threat indicators were found.
+- 🟡 **Suspicious** — Some indicators require caution.
+- 🔴 **High Risk** — Strong evidence of a potential threat was found.
 
-## Deploy on Vercel
+The result also explains **why** something was flagged and what the user should do next.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# 🔐 How Does Scam Check Work?
+
+Scam Check does **not rely on a single AI model**.
+
+For URLs, Digital Safety Hub uses multiple layers of analysis.
+
+```text
+                User enters URL
+                       │
+                       ▼
+                URL Normalization
+                       │
+          ┌────────────┼────────────┐
+          ▼            ▼            ▼
+       Security        ML        Threat
+        Rules       Classifier  Intelligence
+          │            │            │
+          │            │         URLhaus
+          │            │
+          └────────────┼────────────┘
+                       ▼
+                    Gemini
+                       │
+                       ▼
+                 Risk Aggregator
+                       │
+             ┌─────────┼─────────┐
+             ▼         ▼         ▼
+           SAFE    SUSPICIOUS  HIGH RISK
+
+### 🚨 Report & Recover
+
+If someone has already been scammed, Digital Safety Hub provides a guided recovery process.
+
+It can help users:
+
+- Identify the type of incident
+- Record important details
+- Prepare an incident summary
+- Preserve useful evidence
+- Find official reporting resources
+- Access important emergency contacts and government resources
+
+The application does **not** automatically submit a complaint on behalf of the user.
+
+---
+
+### 📚 Safety Hub
+
+The Safety Hub provides simple educational content about common online threats such as:
+
+- Phishing
+- UPI and payment scams
+- Fake websites
+- Account takeover
+- OTP scams
+- Social engineering
+- Other common cyber threats
+
+The goal is to help users understand scams instead of simply warning them about them.
+
+---
+

@@ -44,8 +44,19 @@ export async function downloadTextFile(filename: string, text: string) {
   downloadBlob(filename, blob);
 }
 
-export function downloadJsonFile(filename: string, obj: any) {
-  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+export function downloadJsonFile(filename: string, obj: unknown) {
+  let json = '';
+  try {
+    json = JSON.stringify(obj, null, 2);
+  } catch (e) {
+    // Fallback to string conversion if object is not JSON-serializable
+    try {
+      json = String(obj as unknown);
+    } catch {
+      json = '{}';
+    }
+  }
+  const blob = new Blob([json], { type: 'application/json' });
   downloadBlob(filename, blob);
 }
 

@@ -31,7 +31,7 @@ const steps = [
 const stats = [
   { value: "4", label: "Types of content you can check" },
   { value: "20", label: "Recovery guides for real scams" },
-  { value: "3", label: "Easy-to-read safety guides" },
+  { value: "9", label: "Easy-to-read safety guides" },
   { value: "1930", label: "Official cyber fraud helpline" },
 ];
 

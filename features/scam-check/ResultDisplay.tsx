@@ -21,15 +21,15 @@ export function ResultDisplay({ result, onReset }: ResultDisplayProps) {
 
   const styles = {
     card: isSafe
-      ? "border-success/40 dark:border-success/30"
+      ? "border-success/40"
       : isSuspicious
-        ? "border-warning/50 dark:border-warning/40"
-        : "border-danger/50 dark:border-danger/40",
+        ? "border-warning/50"
+        : "border-danger/50",
     iconWrap: isSafe
-      ? "bg-success/10 text-success ring-1 ring-success/20 dark:bg-success/20"
+      ? "bg-success/10 text-success ring-1 ring-success/20"
       : isSuspicious
-        ? "bg-warning/10 text-warning-foreground ring-1 ring-warning/20 dark:bg-warning/20"
-        : "bg-danger/10 text-danger ring-1 ring-danger/20 dark:bg-danger/20",
+        ? "bg-warning/10 text-warning-foreground ring-1 ring-warning/20"
+        : "bg-danger/10 text-danger ring-1 ring-danger/20",
   };
 
   return (

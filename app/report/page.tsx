@@ -1,5 +1,6 @@
 import { RecoveryWizard } from "@/features/report-recovery/RecoveryWizard";
 import { OfficialResources } from "@/features/report-recovery/OfficialResources";
+import { FirstSteps } from "@/features/report-recovery/FirstSteps";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { LifeBuoy, ShieldAlert } from "lucide-react";
@@ -17,6 +18,7 @@ export default function ReportPage() {
       <div className="grid gap-10 lg:grid-cols-[2fr_1fr] lg:gap-12">
         <div className="min-w-0">
           <RecoveryWizard />
+          <FirstSteps />
         </div>
         <aside className="lg:sticky lg:top-24 lg:self-start">
           <h3 className="text-lg font-semibold mb-4 flex items-center lg:mt-2">

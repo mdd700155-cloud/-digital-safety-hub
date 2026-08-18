@@ -28,6 +28,7 @@ export function RecoveryWizard() {
     description: "",
   });
   const [copied, setCopied] = useState(false);
+  const [incidentSummary, setIncidentSummary] = useState<any | null>(null);
 
   const activeChecklist = recoveryChecklists.find(c => c.id === selectedCategory);
 
@@ -39,32 +40,56 @@ export function RecoveryWizard() {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const summary = {
+      category: formData.category,
+      date: formData.date,
+      amount: formData.amount,
+      platform: formData.platform,
+      description: formData.description,
+      steps: activeChecklist?.steps || [],
+      generatedAt: new Date().toISOString(),
+    };
+    setIncidentSummary(summary);
     setStep(3);
   };
 
-  const generateReportText = () => {
-    return `INCIDENT REPORT SUMMARY (Locally Generated)
-Date of Generation: ${new Date().toLocaleDateString()}
-
-CATEGORY: ${formData.category}
-INCIDENT DATE: ${formData.date || "Not provided"}
-PLATFORM/WEBSITE: ${formData.platform || "Not provided"}
-FINANCIAL LOSS: ${formData.amount || "None/Not provided"}
-
-DESCRIPTION:
-${formData.description || "No description provided."}
-
-RECOMMENDED ACTION STEPS (From Digital Safety Hub):
-${activeChecklist?.steps.map((s, i) => `${i + 1}. ${s}`).join("\n") || "No steps available."}
-
---
-Note: This report is generated locally on your device to help you organize your thoughts before speaking to authorities or your bank. It has NOT been submitted to any agency.`;
+  const generateReportText = (source: any = incidentSummary) => {
+    if (!source) return '';
+    return `INCIDENT REPORT SUMMARY (Locally Generated)\nDate of Generation: ${new Date(source.generatedAt).toLocaleString()}\n\nCATEGORY: ${source.category}\nINCIDENT DATE: ${source.date || "Not provided"}\nPLATFORM/WEBSITE: ${source.platform || "Not provided"}\nFINANCIAL LOSS: ${source.amount || "None/Not provided"}\n\nDESCRIPTION:\n${source.description || "No description provided."}\n\nRECOMMENDED ACTION STEPS (From Digital Safety Hub):\n${(source.steps || []).map((s: string, i: number) => `${i + 1}. ${s}`).join("\n") || "No steps available."}\n\n--\nNote: This report is generated locally on your device to help you organize your thoughts before speaking to authorities or your bank. It has NOT been submitted to any agency.`;
   };
 
   const handleCopy = () => {
     navigator.clipboard.writeText(generateReportText());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownloadTxt = () => {
+    if (!incidentSummary) return;
+    const text = generateReportText();
+    //@ts-ignore
+    import('@/lib/helpers/evidenceExport').then(({ downloadTextFile }) => {
+      downloadTextFile(`incident-summary-${new Date().toISOString()}.txt`, text);
+    });
+  };
+
+  const handleDownloadJson = () => {
+    if (!incidentSummary) return;
+    //@ts-ignore
+    import('@/lib/helpers/evidenceExport').then(({ downloadJsonFile }) => {
+      downloadJsonFile(`incident-summary-${new Date().toISOString()}.json`, incidentSummary);
+    });
+  };
+
+  const handleDownloadPng = async () => {
+    if (!incidentSummary) return;
+    const text = generateReportText();
+    //@ts-ignore
+    const { renderSummaryAsPng, downloadBlob } = await import('@/lib/helpers/evidenceExport');
+    const dataUrl = await renderSummaryAsPng(text, { width: 900 });
+    const res = await fetch(dataUrl);
+    const blob = await res.blob();
+    downloadBlob(`incident-summary-${new Date().toISOString()}.png`, blob);
   };
 
   return (
@@ -195,23 +220,34 @@ Note: This report is generated locally on your device to help you organize your 
       {step === 3 && (
         <Card className="animate-in fade-in slide-in-from-right-4 duration-500">
           <CardHeader>
-            <CardTitle>Your Incident Summary is Ready</CardTitle>
-            <CardDescription>Copy this information to use when filing an official report or contacting support.</CardDescription>
+            <CardTitle>Summary Ready</CardTitle>
+            <CardDescription>Evidence summary generated locally. Download or copy before reporting.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="bg-muted p-4 rounded-md relative group font-mono text-sm whitespace-pre-wrap">
-              {generateReportText()}
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+              <div>
+                <p className="font-semibold">{incidentSummary?.category}</p>
+                <p className="text-sm text-muted-foreground">{incidentSummary?.date || 'Incident date not provided'}</p>
+                <p className="text-xs mt-2">{incidentSummary?.platform || 'Platform / identifier not provided'}</p>
+              </div>
+              <div className="text-sm text-muted-foreground">Generated: {incidentSummary ? new Date(incidentSummary.generatedAt).toLocaleString() : ''}</div>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col sm:flex-row justify-between gap-4 border-t pt-6 bg-muted/10">
-            <Button variant="outline" onClick={() => setStep(2)}>
-              Edit Details
-            </Button>
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Button onClick={handleCopy} className="w-full sm:w-auto">
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setStep(2)}>Edit Details</Button>
+              <Button onClick={handleCopy}>
                 <ClipboardCopy className="mr-2 h-4 w-4" />
-                {copied ? "Copied!" : "Copy Report"}
+                {copied ? "Copied!" : "Copy Summary"}
               </Button>
+              <Button onClick={handleDownloadTxt} variant="ghost">Download TXT</Button>
+              <Button onClick={handleDownloadPng} variant="ghost">Download PNG</Button>
+              <Button onClick={handleDownloadJson} variant="ghost">Download JSON</Button>
+            </div>
+
+            <div className="flex gap-2">
+              <a href="tel:1930" className="inline-flex items-center justify-center rounded-md border px-3 py-2">Call 1930</a>
+              <a href="https://cybercrime.gov.in/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-md border px-3 py-2">Report Online</a>
             </div>
           </CardFooter>
         </Card>

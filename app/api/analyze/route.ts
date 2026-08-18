@@ -4,6 +4,7 @@ import { analyzeUrl } from "@/lib/security/urlAnalyzer";
 import { analyzeMessage } from "@/lib/security/messageAnalyzer";
 import { checkUrlhaus } from "@/lib/security/urlhaus";
 import { aggregateRisk } from "@/lib/security/aggregator";
+import { classifyUrl } from "@/lib/security/mlUrlClassifier";
 import { analyzeWithGemini, analyzeImageWithGemini } from "@/lib/ai/gemini";
 import { ThreatIntel } from "@/types/analysis";
 import { UrlSignal } from "@/lib/security/urlAnalyzer";
@@ -87,6 +88,30 @@ export async function POST(request: Request) {
       // Collect both plain strings (for display) and weighted signals (for aggregator)
       finalHeuristicSignals.push(...urlResult.signalMessages);
       finalWeightedSignals = urlResult.signals;
+
+      // ML-based URL classification (optional signal)
+      try {
+        const ml = await classifyUrl(targetUrl);
+        if (ml.available && ml.signal) {
+          finalHeuristicSignals.push(
+            `[ML] ${ml.signal} (model v${ml.modelVersion ?? "unknown"})`
+          );
+          // Map ML categorical signal into a conservative weighted signal
+          if (ml.signal === "HIGH_RISK_SIGNAL") {
+            finalWeightedSignals.push({
+              message: `ML model indicates multiple URL characteristics associated with phishing (v${ml.modelVersion ?? "unknown"})`,
+              weight: "MODERATE",
+            });
+          } else if (ml.signal === "SUSPICIOUS_SIGNAL") {
+            finalWeightedSignals.push({
+              message: `ML model flags this URL as suspicious (v${ml.modelVersion ?? "unknown"})`,
+              weight: "WEAK",
+            });
+          }
+        }
+      } catch {
+        // Fail open: missing or broken ML model should not block analysis
+      }
 
       // Threat Intel Lookup (only if URL is parseable)
       if (!urlResult.isMalformed && urlResult.normalizedUrl) {

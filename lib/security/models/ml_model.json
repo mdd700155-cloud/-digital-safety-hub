@@ -1,0 +1,51 @@
+{
+  "version": "1.0",
+  "featureOrder": [
+    "url_length",
+    "hostname_length",
+    "path_length",
+    "num_dots",
+    "subdomain_count",
+    "num_digits",
+    "num_hyphens",
+    "num_query_params",
+    "num_path_segments",
+    "has_ip",
+    "has_at",
+    "has_pct_encoding",
+    "has_punycode",
+    "is_https",
+    "unusual_port",
+    "hostname_entropy",
+    "path_entropy"
+  ],
+  "intercept": 0.5006820385528715,
+  "coefficients": {
+    "url_length": -3.155135277278233,
+    "hostname_length": 2.982292898448444,
+    "path_length": -8.47345495431996,
+    "num_dots": 8.499313678464492,
+    "subdomain_count": -9.225951232520922,
+    "num_digits": -0.9443085664571186,
+    "num_hyphens": -0.8904811762663294,
+    "num_query_params": -0.2593073850011071,
+    "num_path_segments": -0.2347368452677512,
+    "has_ip": 0.00030176038570456376,
+    "has_at": -0.036399946408467096,
+    "has_pct_encoding": -0.006931221169544591,
+    "has_punycode": -0.07157268837179065,
+    "is_https": 15.918256186665795,
+    "unusual_port": -4.199803928508906e-05,
+    "hostname_entropy": 0.24344847865401842,
+    "path_entropy": -0.9191128231481619
+  },
+  "threshold": 0.5,
+  "training_metadata": {
+    "seed": 42,
+    "n_total": 235795,
+    "n_train": 165056,
+    "n_val": 35369,
+    "n_test": 35370,
+    "selected_threshold": 0.5
+  }
+}

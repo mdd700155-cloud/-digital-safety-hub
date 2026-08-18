@@ -96,9 +96,9 @@ export function ResultDisplay({ result, onReset }: ResultDisplayProps) {
         </CardFooter>
       </Card>
       
-      <p className="text-xs text-center text-muted-foreground">
+      {/* <p className="text-xs text-center text-muted-foreground">
         Note: This is an automated frontend analysis. Always use your best judgment.
-      </p>
+      </p> */}
     </div>
   );
 }

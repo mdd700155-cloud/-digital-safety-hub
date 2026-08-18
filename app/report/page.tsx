@@ -1,4 +1,5 @@
 import { RecoveryWizard } from "@/features/report-recovery/RecoveryWizard";
+import { OfficialResources } from "@/features/report-recovery/OfficialResources";
 import { PageContainer } from "@/components/layout/PageContainer";
 
 export default function ReportPage() {
@@ -10,8 +11,9 @@ export default function ReportPage() {
           If you suspect you&apos;ve been targeted, act quickly. Follow our guided checklist to mitigate damage and prepare your report.
         </p>
       </div>
-      
+
       <RecoveryWizard />
+      <OfficialResources />
     </PageContainer>
   );
 }

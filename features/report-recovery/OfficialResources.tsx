@@ -57,9 +57,18 @@ const resources = [
   },
 ];
 
-export function OfficialResources() {
+interface OfficialResourcesProps {
+  compact?: boolean;
+}
+
+export function OfficialResources({ compact = false }: OfficialResourcesProps) {
   return (
-    <div className="w-full max-w-3xl mx-auto mt-10 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div
+      className={cn(
+        "w-full max-w-3xl mx-auto mt-10 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500",
+        compact && "max-w-none mx-0 mt-0"
+      )}
+    >
       {/* Evidence reminder */}
       <Card className="border-warning/30 bg-warning/5 shadow-soft">
         <CardHeader className="pb-3">
@@ -72,7 +81,7 @@ export function OfficialResources() {
           <p className="text-sm text-warning-foreground mb-3 leading-relaxed">
             Before reporting, preserve all evidence. <strong>Do not delete suspicious messages.</strong>
           </p>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-sm text-warning-foreground">
+          <ul className={cn("grid gap-1.5 text-sm text-warning-foreground", compact ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2")}>
             {[
               "Screenshots of messages/calls",
               "Transaction ID / UTR number",
@@ -92,16 +101,18 @@ export function OfficialResources() {
 
       {/* Official Reporting Resources */}
       <div>
-        <h3 className="text-lg font-semibold mb-4 flex items-center">
-          <ShieldAlert className="h-5 w-5 mr-2 text-primary" />
-          Official Reporting & Support
-        </h3>
+        {!compact && (
+          <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <ShieldAlert className="h-5 w-5 mr-2 text-primary" />
+            Official Reporting & Support
+          </h3>
+        )}
 
         <div className="space-y-3">
           {resources.map((res) => (
             <Card key={res.title} className="border hover:border-primary/50 hover:shadow-soft transition-all">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between gap-4">
+              <CardContent className={compact ? "p-4" : "p-5"}>
+                <div className={cn("flex items-start justify-between gap-4", compact && "flex-col")}>
                   <div className="flex-1">
                     <div className="flex items-center gap-2.5 mb-2">
                       <span className={cn("flex h-8 w-8 items-center justify-center rounded-lg", res.iconClass)}>
@@ -124,7 +135,8 @@ export function OfficialResources() {
                     {...(res.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                     className={cn(
                       buttonVariants({ variant: "outline", size: "sm" }),
-                      "whitespace-nowrap shrink-0"
+                      "whitespace-nowrap shrink-0",
+                      compact && "w-full"
                     )}
                   >
                     {res.cta}

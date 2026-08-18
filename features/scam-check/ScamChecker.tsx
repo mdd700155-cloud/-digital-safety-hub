@@ -249,7 +249,7 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
                   </div>
                 ) : (
                   <>
-                    <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-4 ring-1 ring-primary/10">
+                    <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4 ring-1 ring-primary/10">
                       <UploadCloud className="h-6 w-6" />
                     </div>
                     <h3 className="font-medium mb-1">Click to upload screenshot</h3>

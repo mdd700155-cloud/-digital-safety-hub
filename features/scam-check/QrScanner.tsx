@@ -133,7 +133,7 @@ export function QrScanner({ onDecoded, onError }: QrScannerProps) {
           ) : null}
 
           <div className="flex flex-col items-center gap-3 py-2">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary ring-1 ring-primary/10">
+            <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center ring-1 ring-primary/10">
               <ScanLine className="h-6 w-6" />
             </div>
             <Button

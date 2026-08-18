@@ -5,6 +5,7 @@ import { safetyTopics, SafetyTopic } from "@/lib/mock/safetyData";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronRight, Shield, ArrowLeft, AlertTriangle, Lightbulb, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function EducationDashboard() {
   const [selectedTopic, setSelectedTopic] = useState<SafetyTopic | null>(null);
@@ -91,23 +92,26 @@ export function EducationDashboard() {
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto">
-      <div className="flex flex-col items-center text-center space-y-4 mb-12">
-        <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
+    <div className="w-full mx-auto">
+      <div className="flex flex-col items-start text-left space-y-4 mb-12">
+        <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary shadow-sm">
           <GraduationCap className="h-4 w-4" />
           Learn & Protect
         </span>
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Learn About Scams</h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+        <p className="text-lg text-muted-foreground max-w-xl leading-relaxed">
           Scammers constantly evolve their tactics. Read our quick guides to understand common threats and how to spot them.
         </p>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {safetyTopics.map((topic) => (
+      <div className="grid sm:grid-cols-2 gap-6">
+        {safetyTopics.map((topic, idx) => (
           <Card
             key={topic.id}
-            className="cursor-pointer transition-all hover:shadow-lift hover:border-primary/50 group flex flex-col h-full"
+            className={cn(
+              "cursor-pointer transition-all hover:shadow-lift hover:border-primary/50 group flex flex-col h-full",
+              idx === safetyTopics.length - 1 && safetyTopics.length % 2 !== 0 && "sm:col-span-2"
+            )}
             onClick={() => setSelectedTopic(topic)}
           >
             <CardHeader>

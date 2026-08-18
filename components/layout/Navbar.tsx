@@ -1,11 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PageContainer } from "./PageContainer";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { MobileNav } from "./MobileNav";
 
 const navLinks = [
   { href: "/check", label: "Scam Check" },
@@ -15,9 +17,10 @@ const navLinks = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <PageContainer>
         <div className="flex h-16 items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2.5 group">
@@ -29,8 +32,8 @@ export function Navbar() {
             </span>
           </Link>
 
-          <div className="flex items-center gap-2 sm:gap-6">
-            <nav className="flex items-center gap-1 sm:gap-2 text-sm font-medium text-muted-foreground">
+          <div className="flex items-center gap-1 sm:gap-6">
+            <nav className="hidden md:flex items-center gap-1 sm:gap-2 text-sm font-medium text-muted-foreground">
               {navLinks.map((link) => {
                 const isActive =
                   pathname === link.href || pathname.startsWith(`${link.href}/`);
@@ -40,8 +43,7 @@ export function Navbar() {
                     href={link.href}
                     className={cn(
                       "rounded-md px-2 py-1.5 transition-colors hover:text-foreground sm:px-3",
-                      isActive &&
-                        "bg-muted text-foreground shadow-sm"
+                      isActive && "bg-primary/10 text-primary shadow-sm"
                     )}
                   >
                     {link.label}
@@ -49,11 +51,25 @@ export function Navbar() {
                 );
               })}
             </nav>
-            <div className="h-5 w-px bg-border hidden sm:block" />
-            <ThemeToggle />
+
+            <div className="flex items-center gap-1.5">
+              <div className="h-5 w-px bg-border hidden sm:block" />
+              <ThemeToggle />
+              <button
+                type="button"
+                aria-label="Open menu"
+                aria-expanded={mobileOpen}
+                className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground md:hidden"
+                onClick={() => setMobileOpen(true)}
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </div>
       </PageContainer>
+
+      <MobileNav open={mobileOpen} onClose={() => setMobileOpen(false)} />
     </header>
   );
 }

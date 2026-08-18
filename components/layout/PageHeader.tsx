@@ -6,6 +6,7 @@ interface PageHeaderProps {
   description: string;
   badge?: string;
   icon?: React.ReactNode;
+  align?: "center" | "left";
   className?: string;
 }
 
@@ -14,18 +15,30 @@ export function PageHeader({
   description,
   badge,
   icon,
+  align = "center",
   className,
 }: PageHeaderProps) {
   return (
-    <div className={cn("flex flex-col items-center text-center space-y-4 mb-12", className)}>
+    <div
+      className={cn(
+        "flex flex-col space-y-4 mb-12",
+        align === "center" ? "items-center text-center" : "items-start text-left",
+        className
+      )}
+    >
       {(badge || icon) && (
-        <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+        <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm font-medium text-primary shadow-sm">
           {icon}
           {badge}
         </span>
       )}
       <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{title}</h1>
-      <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+      <p
+        className={cn(
+          "text-lg text-muted-foreground leading-relaxed",
+          align === "center" ? "max-w-2xl mx-auto" : "max-w-xl"
+        )}
+      >
         {description}
       </p>
     </div>

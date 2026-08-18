@@ -7,9 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { recoveryChecklists } from "@/lib/mock/recoveryData";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ClipboardCopy, CheckCircle2, ShieldAlert, Check, FileText, Phone, ExternalLink } from "lucide-react";
+import { ClipboardCopy, CheckCircle2, ShieldAlert, Check, FileText, Phone, ExternalLink, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CategoryCombobox } from "./CategoryCombobox";
 
 interface IncidentData {
   category: string;
@@ -131,22 +130,31 @@ export function RecoveryWizard() {
       </div>
 
       {step === 1 && (
-        <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-soft overflow-visible">
+        <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-soft">
           <CardHeader className="border-b border-border/40 bg-muted/30">
             <CardTitle className="text-2xl flex items-center">
               <ShieldAlert className="h-6 w-6 mr-2 text-primary" />
               What kind of incident occurred?
             </CardTitle>
-            <CardDescription>Search or pick the category that best matches your situation to get tailored recovery steps.</CardDescription>
+            <CardDescription>Pick the category that best matches your situation to get tailored recovery steps.</CardDescription>
           </CardHeader>
           <CardContent>
-            <CategoryCombobox
-              options={recoveryChecklists.map((item) => ({
-                id: item.id,
-                category: item.category,
-              }))}
-              onSelect={handleCategorySelect}
-            />
+            <div className="grid gap-2.5 sm:grid-cols-2">
+              {recoveryChecklists.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => handleCategorySelect(item.id, item.category)}
+                  className="group flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background px-4 py-3 text-left text-sm font-medium text-foreground/90 transition-all hover:border-primary/50 hover:bg-primary/5 hover:shadow-soft"
+                >
+                  {item.category}
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-primary" />
+                </button>
+              ))}
+            </div>
+            <p className="mt-4 text-xs text-muted-foreground">
+              Don&apos;t see an exact match? Pick the closest option — the recovery steps will still be useful.
+            </p>
           </CardContent>
         </Card>
       )}

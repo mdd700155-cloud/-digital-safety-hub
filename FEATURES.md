@@ -1,0 +1,227 @@
+# Digital Safety Hub — Feature List
+
+A user-friendly cybersecurity web application that helps everyday users check suspicious messages, URLs, screenshots, and QR codes, understand potential risks, and receive actionable safety or recovery guidance.
+
+> **Check → Understand → Protect → Recover**
+
+---
+
+## Table of Contents
+
+1. [Home Page](#home-page)
+2. [Scam Check](#scam-check)
+3. [Analysis Engine](#analysis-engine)
+4. [Report & Recover](#report--recover)
+5. [Safety Hub](#safety-hub)
+6. [Navigation & Layout](#navigation--layout)
+7. [Design & UX](#design--ux)
+8. [Privacy & Honesty Principles](#privacy--honesty-principles)
+9. [Tech Stack](#tech-stack)
+10. [Route Map](#route-map)
+11. [Scripts](#scripts)
+12. [Project Structure](#project-structure)
+
+---
+
+## Home Page
+
+| Feature | Details |
+| --- | --- |
+| Split hero section | Headline + trust points on the left, live compact Scam Checker on the right |
+| Quick actions | "Check it now" (scrolls to the checker) and "Already been scammed?" (→ `/report`) |
+| Stats strip | 4 input types · 20 recovery guides · 9 safety guides · 1930 helpline |
+| How it works (bento grid) | 4 numbered steps — Check, Understand, Protect, Recover — plus a "Learn the patterns" CTA card linking to the Safety Hub |
+| Empower Yourself panel | Promotes the educational Safety Hub |
+
+---
+
+## Scam Check
+
+Route: `/check`
+
+| Feature | Details |
+| --- | --- |
+| Input modes (4 tabs) | **Message** (textarea), **URL/link** (text input), **Screenshot** (image upload), **QR code** (live camera scanner) |
+| Image upload | Drag-and-drop style upload with preview, 5 MB size limit, client-side validation |
+| QR scanning | Live camera scanning powered by `html5-qrcode`, with a manual-entry fallback |
+| Analysis trigger | Explicit "Analyze" action per tab; loading state with spinner while running |
+| Result card | Color-coded risk card (green / yellow / red) with: |
+| — Risk level | **Safe** ("No obvious threat detected"), **Suspicious**, or **High Risk** |
+| — Confidence | Low / Medium / High |
+| — Summary | Plain-language explanation of the result |
+| — Warning indicators | Specific reasons the content was flagged |
+| — Recommendations | Concrete next steps for the user |
+| — Signals | Raw signals collected during analysis |
+| — Threat intelligence | Shows when a public threat-intel match (e.g., URLhaus) was found |
+| Error state | Friendly error message when analysis fails; analysis history is not persisted |
+| Layout | Two-column desktop layout with a sticky "What can you check?" rail; single column on mobile |
+
+---
+
+## Analysis Engine
+
+Route: `/api/analyze` (POST)
+
+| Feature | Details |
+| --- | --- |
+| Input validation | Request body validated with `zod` (type + content), untrusted input handled safely |
+| URL normalization | Incoming URLs are normalized and parsed before checks |
+| Structural heuristics | Rule-based signals: URL anomalies, malformed URLs, suspicious keywords/patterns in messages, image/QR metadata |
+| AI analysis (optional) | Google Gemini (`@google/genai`) analyzes content when `GEMINI_API_KEY` is set — **server-side only**, the key is never exposed to the client |
+| ML URL classifier | Optional local ML classifier for URL risk scoring |
+| Threat intelligence | `URLhaus` lookup to check whether a URL is listed as malicious |
+| Risk aggregator | Combines all signals into a final verdict: `SAFE` / `SUSPICIOUS` / `HIGH_RISK` |
+| Graceful fallback | If AI/ML/intel are unavailable, analysis continues with structural heuristics and the response **honestly states** that AI was unavailable — no fabricated results |
+| Privacy | Only the submitted content is sent to the API; nothing is stored |
+
+---
+
+## Report & Recover
+
+Route: `/report`
+
+| Feature | Details |
+| --- | --- |
+| Step indicator | 3-step progress bar with checkmarks (Select Type → Checklist & Form → Summary) |
+| Step 1 — Incident type | Grid of **20 incident categories** (money/UPI fraud, OTP theft, phishing, investment scams, sextortion, deepfake impersonation, etc.). Pick the closest match to get tailored steps |
+| Step 2 — Immediate action steps | Category-specific checklist of steps to mitigate damage (from 20 curated recovery checklists) |
+| Step 2 — Incident summary form (optional) | Date, amount lost, platform/phone/URL, brief description; clearly marked as stored **locally on the device only** |
+| Step 3 — Summary card | Shows category, date, platform, and generated timestamp |
+| Copy summary | One-click copy of a formatted text report via the clipboard |
+| Download report | Download as **TXT**, **PNG**, or **JSON** (generated locally via `evidenceExport` helpers) |
+| Local-only guarantee | The report is never submitted to any agency — the user takes it to their bank or authorities |
+| First Steps section | "Act fast — your first steps": 4 numbered cards — stop payments, save evidence, secure accounts, report the incident |
+| Official Resources rail (sticky) | Compact rail on desktop with: |
+| — 1930 helpline | Financial Cyber Fraud Helpline call button (`tel:1930`) |
+| — NCRP portal | `cybercrime.gov.in` report link |
+| — Suspect identifier | Report suspicious URLs/numbers/accounts |
+| — Suspect repository | Government database check for flagged identifiers |
+| — Evidence card | "Preserve Your Evidence" checklist (screenshots, transaction ID, date/time, etc.) |
+
+---
+
+## Safety Hub
+
+Route: `/learn`
+
+| Feature | Details |
+| --- | --- |
+| Topic grid | **9 scam guides** as clickable cards (2-column grid): |
+| 1. Phishing Links & Messages | 6. Investment & Crypto Scams |
+| 2. UPI & Payment Scams | 7. Online Shopping & Delivery Scams |
+| 3. Fake Job Offers | 8. Digital Arrest & Fake Police Scams |
+| 4. QR Code Scams | 9. Fake Customer Support |
+| 5. OTP & Credential Theft | |
+| Detail view | Each guide opens a full page with: |
+| — How It Works | Plain-language explanation of the scam mechanism |
+| — Warning Signs | Red-flag checklist (red card) |
+| — What To Do | Protective actions checklist (green card) |
+| — Example Scenario | Realistic example message/script in a styled quote block |
+| Back navigation | "Back to Topics" button returns to the grid |
+
+---
+
+## Navigation & Layout
+
+| Feature | Details |
+| --- | --- |
+| Sticky top navbar | Always visible, backdrop blur, active-link highlighting |
+| Desktop links | Scam Check · Report & Recover · Safety Hub (with home logo link) |
+| Mobile view | Links stay in the top bar with compact sizing (no hamburger menu) |
+| Footer | Marketing footer with brand blurb, Explore links, and Official Resources (1930 helpline + cybercrime.gov.in) |
+
+---
+
+## Design & UX
+
+| Feature | Details |
+| --- | --- |
+| Theme | Clean **light theme** with semantic design tokens (primary, muted, success, warning, danger, etc.) |
+| Responsive | Mobile-first layouts for every page (grids collapse, rails become single column) |
+| Accessibility | ARIA labels on icon buttons, keyboard support for all controls, focus-visible rings, semantic HTML |
+| Feedback states | Loading spinners, error messages, empty states, and success confirmations across features |
+| Visual language | Consistent cards, soft shadows, rounded corners, subtle gradients, icon-driven UI |
+| Motion | Light `animate-in` transitions only — no distracting animations |
+| No login required | All features are usable immediately |
+
+---
+
+## Privacy & Honesty Principles
+
+- **No login, no accounts, no tracking** — everything is usable without sign-up.
+- **No data storage** — submitted content and incident summaries are never persisted server-side.
+- **Local generation** — incident reports are generated in the browser and stay on the device.
+- **Server-side secrets** — API keys (e.g., Gemini) live only in `.env.local` on the server; never in client code.
+- **Validated input** — all user input and external API responses are treated as untrusted and validated.
+- **Honest results** — the app never claims anything is "100% safe" and never fabricates analysis results or confidence scores. When AI is unavailable it says so explicitly.
+- **No fake functionality** — all buttons and links lead to real, working actions or official resources.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+| --- | --- |
+| Framework | Next.js 16 (App Router) |
+| UI | React 19, TypeScript |
+| Styling | Tailwind CSS 4 |
+| Components | shadcn/ui + Base UI + Nova preset |
+| Icons | lucide-react |
+| Validation | zod |
+| QR scanning | html5-qrcode |
+| AI analysis | @google/genai (server-side, optional key) |
+| Code quality | ESLint (Next.js config) |
+
+---
+
+## Route Map
+
+| Route | Page |
+| --- | --- |
+| `/` | Home — hero, stats, how it works, empower yourself |
+| `/check` | Scam Check — 4 input modes + analysis results |
+| `/report` | Report & Recover — recovery wizard, first steps, official resources |
+| `/learn` | Safety Hub — 9 scam guides |
+| `/api/analyze` | POST endpoint — security analysis engine |
+
+---
+
+## Scripts
+
+```bash
+npm run dev    # start development server
+npm run build  # production build
+npm start      # run production build
+npm run lint   # ESLint
+```
+
+---
+
+## Project Structure
+
+```text
+app/              # Pages and API routes (feature-oriented routes)
+├── page.tsx          # Home
+├── check/            # Scam Check
+├── report/           # Report & Recover
+├── learn/            # Safety Hub
+└── api/analyze/      # Analysis endpoint
+components/
+├── layout/           # Navbar, Footer, PageContainer, PageHeader
+└── ui/               # shadcn/ui primitives
+features/
+├── scam-check/       # ScamChecker, QrScanner, ResultDisplay
+├── report-recovery/  # RecoveryWizard, OfficialResources, FirstSteps
+├── safety-hub/       # EducationDashboard
+├── url-analysis/
+├── qr-scanner/
+└── dashboard/
+lib/
+├── mock/             # recoveryData (20 categories), safetyData (9 guides)
+├── security/         # aggregator, urlAnalyzer, messageAnalyzer, urlhaus, mlUrlClassifier
+├── ai/               # Gemini integration
+├── validation/       # Input validation
+└── helpers/          # evidenceExport
+types/                # Shared TypeScript types (analysis, etc.)
+config/               # Configuration
+```

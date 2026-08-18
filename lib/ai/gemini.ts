@@ -43,6 +43,60 @@ export interface GeminiAnalysisResponse {
   extractedUrls: string[];
 }
 
+// Primary model first; the fallbacks cover temporary quota/demand limits
+// (503 "high demand") on the primary one. gemini-2.5-flash was retired for
+// new users, so all calls go through the current flash line.
+const ANALYSIS_MODELS = [
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-flash-latest",
+];
+
+const RETRY_DELAYS_MS = [1000, 2000, 3000];
+
+type GenerateContentMethod = NonNullable<GoogleGenAI["models"]>["generateContent"];
+
+async function generateWithRetry(
+  ai: GoogleGenAI,
+  input: Omit<Parameters<GenerateContentMethod>[0], "model">
+): Promise<Awaited<ReturnType<GenerateContentMethod>> | null> {
+  for (const model of ANALYSIS_MODELS) {
+    for (let attempt = 0; attempt < RETRY_DELAYS_MS.length; attempt++) {
+      try {
+        return await ai.models.generateContent({ model, ...input });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const isRetryable =
+          message.includes("UNAVAILABLE") ||
+          message.includes("high demand") ||
+          message.includes("429") ||
+          message.includes("RESOURCE_EXHAUSTED") ||
+          message.includes("rate limit");
+
+        if (!isRetryable) {
+          throw error;
+        }
+
+        const isLastModel = model === ANALYSIS_MODELS[ANALYSIS_MODELS.length - 1];
+        const isLastAttempt = isLastModel && attempt === RETRY_DELAYS_MS.length - 1;
+
+        if (isLastAttempt) {
+          // Only log the full error when every retry has been exhausted —
+          // transient 503s are expected and handled silently.
+          console.error("Gemini call failed after all retries:", error);
+        } else {
+          console.warn(
+            `Gemini call unavailable (${message.slice(0, 60)}) — retrying (model ${model}, attempt ${attempt + 1})`
+          );
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt] ?? 3000));
+      }
+    }
+  }
+  return null;
+}
+
 export async function analyzeWithGemini(
   content: string,
   contentType: "url" | "message",
@@ -57,7 +111,6 @@ export async function analyzeWithGemini(
 
   try {
     const ai = new GoogleGenAI({ apiKey });
-    const model = "gemini-2.5-flash";
 
     const prompt = `You are a cybersecurity analyst providing a careful, honest assessment.
 
@@ -84,8 +137,7 @@ Threat Intelligence (URLhaus malware DB) match: ${threatIntelMatch ? "YES — kn
 
 Provide your contextual security assessment now.`;
 
-    const response = await ai.models.generateContent({
-      model,
+    const response = await generateWithRetry(ai, {
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -93,6 +145,10 @@ Provide your contextual security assessment now.`;
         temperature: 0.1,
       },
     });
+
+    if (!response) {
+      return null;
+    }
 
     if (response.text) {
       const parsed = JSON.parse(response.text) as GeminiAnalysisResponse;
@@ -125,7 +181,6 @@ export async function analyzeImageWithGemini(
 
   try {
     const ai = new GoogleGenAI({ apiKey });
-    const model = "gemini-2.5-flash";
 
     const prompt = `You are a cybersecurity analyst examining a screenshot submitted by a user.
 
@@ -137,8 +192,7 @@ CRITICAL RULES:
 5. Be conservative. If the image appears to show a normal conversation or website, prefer SAFE.
 6. Avoid definitive language like "this is definitely a scam" unless evidence is very clear.`;
 
-    const response = await ai.models.generateContent({
-      model,
+    const response = await generateWithRetry(ai, {
       contents: [
         {
           role: "user",
@@ -159,6 +213,10 @@ CRITICAL RULES:
         temperature: 0.1,
       },
     });
+
+    if (!response) {
+      return null;
+    }
 
     if (response.text) {
       const parsed = JSON.parse(response.text) as GeminiAnalysisResponse;

@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Link as LinkIcon, Image as ImageIcon, QrCode, Loader2, UploadCloud, X, ShieldCheck } from "lucide-react";
+import { MessageSquare, Link as LinkIcon, Image as ImageIcon, QrCode, Mic, Loader2, UploadCloud, X, ShieldCheck } from "lucide-react";
 import { AnalysisResult } from "@/types/analysis";
 import { ResultDisplay } from "./ResultDisplay";
 import { QrScanner } from "./QrScanner";
+import { VoiceAnalyzer } from "@/features/voice-analysis/VoiceAnalyzer";
 
 interface ScamCheckerProps {
   compact?: boolean;
@@ -144,7 +145,7 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
           }}
           className="w-full"
         >
-          <TabsList className="grid grid-cols-4 mb-6 shadow-sm">
+          <TabsList className="grid grid-cols-5 mb-6 shadow-sm">
             <TabsTrigger value="message" className="flex items-center justify-center">
               <MessageSquare className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Message</span>
@@ -160,6 +161,10 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
             <TabsTrigger value="qr" className="flex items-center justify-center">
               <QrCode className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">QR Code</span>
+            </TabsTrigger>
+            <TabsTrigger value="voice" className="flex items-center justify-center">
+              <Mic className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Voice</span>
             </TabsTrigger>
           </TabsList>
 
@@ -277,8 +282,12 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
               </div>
             </TabsContent>
 
-            {/* Submit button — not shown for QR (submission is auto-triggered on decode) */}
-            {activeTab !== "qr" && (
+            <TabsContent value="voice" className="space-y-4 mt-0">
+              <VoiceAnalyzer />
+            </TabsContent>
+
+            {/* Submit button — not shown for QR (auto-triggered) or Voice (own controls) */}
+            {activeTab !== "qr" && activeTab !== "voice" && (
               <div className="flex justify-end pt-4 border-t mt-6">
                 {inputValue && (
                   <Button type="button" variant="ghost" className="mr-2" onClick={handleReset}>

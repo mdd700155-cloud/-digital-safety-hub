@@ -10,6 +10,7 @@ import {
   Bot,
   RotateCcw,
   LifeBuoy,
+  ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -54,7 +55,7 @@ export function VoiceRiskResult({ result, audio, onReset }: VoiceRiskResultProps
           title: "No obvious threat detected",
           description:
             "We did not find strong scam patterns in this audio. Stay alert — this does not guarantee safety.",
-          className: "border-emerald-300 bg-emerald-50 text-emerald-700",
+          className: "border-success/30 bg-success/10 text-success-foreground",
           badge: "secondary" as const,
         };
 
@@ -117,7 +118,7 @@ export function VoiceRiskResult({ result, audio, onReset }: VoiceRiskResultProps
       <div className="rounded-xl border border-border p-4">
         <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
           <Fingerprint className="h-4 w-4 text-primary" />
-          VOICE SCAM FINGERPRINT
+          Voice scam fingerprint
         </h4>
         <VoiceFingerprint signals={result.signals} />
       </div>
@@ -153,19 +154,19 @@ export function VoiceRiskResult({ result, audio, onReset }: VoiceRiskResultProps
         <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-5">
           <h4 className="font-semibold text-destructive flex items-center gap-2 mb-3">
             <Siren className="h-5 w-5" />
-            WHAT SHOULD YOU DO NOW?
+            What should you do now?
           </h4>
           <ol className="space-y-2.5">
             {result.protectionSteps.map((step, i) => (
               <li key={i} className="flex gap-3 text-sm">
-                <span className="h-5 w-5 rounded-full bg-destructive text-white text-xs flex items-center justify-center shrink-0 mt-0.5">
+                <span className="h-5 w-5 rounded-full bg-danger text-danger-foreground text-xs flex items-center justify-center shrink-0 mt-0.5">
                   {i + 1}
                 </span>
                 <span className="leading-relaxed">{step}</span>
               </li>
             ))}
           </ol>
-          <div className="mt-4 flex flex-wrap gap-3">
+          <div className="mt-4">
             <Link
               href="https://cybercrime.gov.in"
               target="_blank"
@@ -173,14 +174,7 @@ export function VoiceRiskResult({ result, audio, onReset }: VoiceRiskResultProps
               className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
             >
               Report at cybercrime.gov.in
-            </Link>
-            <Link
-              href="https://www.cybercrime.gov.in"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-            >
-              National Cyber Crime Reporting Portal
+              <ExternalLink className="h-3.5 w-3.5" />
             </Link>
           </div>
         </div>

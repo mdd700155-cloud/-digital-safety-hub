@@ -43,10 +43,10 @@ const CATEGORY_ORDER: DeepfakeFeatureScore["category"][] = [
 function ScoreBar({ score, size = "md" }: { score: number; size?: "sm" | "md" }) {
   const color =
     score >= 60
-      ? "bg-red-500"
+      ? "bg-danger"
       : score >= 35
-        ? "bg-amber-500"
-        : "bg-emerald-500";
+        ? "bg-warning"
+        : "bg-success";
 
   return (
     <div
@@ -69,17 +69,17 @@ function ProbabilityGauge({ probability }: { probability: number }) {
 
   const color =
     probability >= 65
-      ? "stroke-red-500"
+      ? "stroke-danger"
       : probability >= 35
-        ? "stroke-amber-500"
-        : "stroke-emerald-500";
+        ? "stroke-warning"
+        : "stroke-success";
 
   const textColor =
     probability >= 65
-      ? "text-red-500"
+      ? "text-danger"
       : probability >= 35
-        ? "text-amber-500"
-        : "text-emerald-500";
+        ? "text-warning"
+        : "text-success";
 
   return (
     <div className="relative h-32 w-32 shrink-0">
@@ -137,7 +137,7 @@ export function DeepfakeResult({ result, onReset }: DeepfakeResultProps) {
         : {
             icon: ShieldCheck,
             title: "Likely Authentic Human Speech",
-            className: "border-emerald-300 bg-emerald-50 text-emerald-700",
+            className: "border-success/30 bg-success/10 text-success-foreground",
             badge: "secondary" as const,
           };
 
@@ -210,7 +210,8 @@ export function DeepfakeResult({ result, onReset }: DeepfakeResultProps) {
       <div className="rounded-xl border border-border overflow-hidden">
         <button
           type="button"
-          className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors text-left"
+          aria-expanded={showFeatures}
+          className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors text-left focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring"
           onClick={() => setShowFeatures(!showFeatures)}
         >
           <h4 className="text-sm font-medium flex items-center gap-2">
@@ -288,14 +289,12 @@ export function DeepfakeResult({ result, onReset }: DeepfakeResultProps) {
       </div>
 
       {/* Actions */}
-      <div className="flex flex-wrap justify-between items-center gap-3 border-t pt-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
         {onReset && (
-          <div className="flex justify-center pt-4">
-            <Button variant="outline" onClick={onReset} className="w-full sm:w-auto">
-              <RotateCcw className="mr-2 h-4 w-4" />
-              Analyze Another Audio File
-            </Button>
-          </div>
+          <Button variant="outline" onClick={onReset}>
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Analyze Another Audio File
+          </Button>
         )}
         <Link
           href="/report"

@@ -10,39 +10,39 @@ export function DeepfakeImageResult({ result }: DeepfakeImageResultProps) {
   const getRiskColor = (level: string) => {
     switch (level) {
       case "LIKELY_SYNTHETIC":
-        return "text-red-500";
+        return "text-danger";
       case "UNCERTAIN":
-        return "text-yellow-500";
+        return "text-warning";
       case "LIKELY_AUTHENTIC":
-        return "text-green-500";
+        return "text-success";
       default:
-        return "text-gray-500";
+        return "text-muted-foreground";
     }
   };
 
   const getRiskBg = (level: string) => {
     switch (level) {
       case "LIKELY_SYNTHETIC":
-        return "bg-red-500/10 border-red-500/20";
+        return "bg-danger/10 border-danger/30";
       case "UNCERTAIN":
-        return "bg-yellow-500/10 border-yellow-500/20";
+        return "bg-warning/10 border-warning/30";
       case "LIKELY_AUTHENTIC":
-        return "bg-green-500/10 border-green-500/20";
+        return "bg-success/10 border-success/30";
       default:
-        return "bg-gray-500/10 border-gray-500/20";
+        return "bg-muted/30 border-border";
     }
   };
 
   const getIcon = (level: string) => {
     switch (level) {
       case "LIKELY_SYNTHETIC":
-        return <AlertTriangle className="h-8 w-8 text-red-500" />;
+        return <AlertTriangle className="h-8 w-8 text-danger" />;
       case "UNCERTAIN":
-        return <HelpCircle className="h-8 w-8 text-yellow-500" />;
+        return <HelpCircle className="h-8 w-8 text-warning" />;
       case "LIKELY_AUTHENTIC":
-        return <CheckCircle className="h-8 w-8 text-green-500" />;
+        return <CheckCircle className="h-8 w-8 text-success" />;
       default:
-        return <Info className="h-8 w-8 text-gray-500" />;
+        return <Info className="h-8 w-8 text-muted-foreground" />;
     }
   };
 
@@ -60,7 +60,7 @@ export function DeepfakeImageResult({ result }: DeepfakeImageResultProps) {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Overview Card */}
-      <div className={`p-6 rounded-2xl border ${getRiskBg(result.riskLevel)}`}>
+      <div className={`p-6 rounded-xl border-2 shadow-soft ${getRiskBg(result.riskLevel)}`}>
         <div className="flex items-center gap-4 mb-4">
           {getIcon(result.riskLevel)}
           <div>
@@ -73,10 +73,13 @@ export function DeepfakeImageResult({ result }: DeepfakeImageResultProps) {
             </p>
           </div>
         </div>
-        <p className="text-sm">{result.summary}</p>
-        
+        <p className="text-sm leading-relaxed">{result.summary}</p>
+
         {result.metadata.processingStatus === "AI_UNAVAILABLE" && (
-          <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg text-xs text-yellow-600 dark:text-yellow-400">
+          <div
+            role="alert"
+            className="mt-4 p-3 bg-warning/10 border border-warning/30 rounded-lg text-xs text-warning-foreground"
+          >
             <Info className="h-4 w-4 inline-block mr-1 mb-0.5" />
             AI analysis unavailable (Missing API Key). Result is based entirely on client-side CS-LBP and Laplacian variance forensics.
           </div>
@@ -110,13 +113,13 @@ export function DeepfakeImageResult({ result }: DeepfakeImageResultProps) {
             <div key={i} className="p-3 bg-secondary/30 rounded-xl border border-border/50">
               <div className="flex justify-between items-center mb-1">
                 <span className="text-xs font-medium">{feature.name}</span>
-                <span className={`text-xs font-bold ${feature.score > 50 ? "text-red-500" : "text-green-500"}`}>
+                <span className={`text-xs font-bold ${feature.score > 50 ? "text-danger" : "text-success"}`}>
                   {feature.score}/100
                 </span>
               </div>
               <div className="w-full bg-secondary rounded-full h-1.5 mb-2">
                 <div
-                  className={`h-1.5 rounded-full ${feature.score > 50 ? "bg-red-500" : "bg-green-500"}`}
+                  className={`h-1.5 rounded-full ${feature.score > 50 ? "bg-danger" : "bg-success"}`}
                   style={{ width: `${feature.score}%` }}
                 />
               </div>

@@ -43,12 +43,18 @@ export function FirstSteps() {
                   <span className="flex h-11 w-11 items-center justify-center rounded-lg bg-primary/10 text-primary ring-1 ring-primary/10">
                     <step.icon className="h-5 w-5" />
                   </span>
-                  <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground shadow-sm">
+                  <span
+                    aria-hidden="true"
+                    className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground shadow-sm"
+                  >
                     {idx + 1}
                   </span>
                 </div>
                 <div>
-                  <h3 className="font-semibold mb-1">{step.title}</h3>
+                  <h3 className="font-semibold mb-1">
+                    <span className="sr-only">Step {idx + 1}: </span>
+                    {step.title}
+                  </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
                 </div>
               </div>

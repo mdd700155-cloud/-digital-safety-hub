@@ -99,32 +99,38 @@ export function TranscriptDisplay({ transcript, signals }: TranscriptDisplayProp
         </p>
       </div>
 
-      <blockquote className="border-l-4 border-primary/30 bg-muted/30 rounded-r-xl px-4 py-3 text-sm leading-relaxed text-foreground/90">
-        {segments.map((segment, index) =>
-          segment.matches.length === 0 ? (
-            <span key={index}>{segment.text}</span>
-          ) : (
-            <button
-              key={index}
-              type="button"
-              onClick={() =>
-                setActiveSegment(activeSegment === index ? null : index)
-              }
-              aria-expanded={activeSegment === index}
-              className={cn(
-                "mx-0.5 rounded px-0.5 underline decoration-wavy underline-offset-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
-                segment.matches.some((m) => m.signal.severity === "HIGH")
-                  ? "bg-destructive/10 text-destructive decoration-destructive/60 hover:bg-destructive/20"
-                  : segment.matches.some((m) => m.signal.severity === "MEDIUM")
-                    ? "bg-warning/15 text-warning-foreground decoration-warning/70 hover:bg-warning/25"
-                    : "bg-primary/10 text-foreground decoration-primary/50 hover:bg-primary/20"
-              )}
-            >
-              {segment.text}
-            </button>
-          )
-        )}
-      </blockquote>
+      {transcript.trim() ? (
+        <blockquote className="border-l-4 border-primary/30 bg-muted/30 rounded-r-xl px-4 py-3 text-sm leading-relaxed text-foreground/90">
+          {segments.map((segment, index) =>
+            segment.matches.length === 0 ? (
+              <span key={index}>{segment.text}</span>
+            ) : (
+              <button
+                key={index}
+                type="button"
+                onClick={() =>
+                  setActiveSegment(activeSegment === index ? null : index)
+                }
+                aria-expanded={activeSegment === index}
+                className={cn(
+                  "mx-0.5 rounded px-0.5 underline decoration-wavy underline-offset-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50",
+                  segment.matches.some((m) => m.signal.severity === "HIGH")
+                    ? "bg-destructive/10 text-destructive decoration-destructive/60 hover:bg-destructive/20"
+                    : segment.matches.some((m) => m.signal.severity === "MEDIUM")
+                      ? "bg-warning/15 text-warning-foreground decoration-warning/70 hover:bg-warning/25"
+                      : "bg-primary/10 text-foreground decoration-primary/50 hover:bg-primary/20"
+                )}
+              >
+                {segment.text}
+              </button>
+            )
+          )}
+        </blockquote>
+      ) : (
+        <p className="text-sm text-muted-foreground bg-muted/30 rounded-xl border border-border/60 px-4 py-3">
+          No transcript available for this audio.
+        </p>
+      )}
 
       {activeSegment !== null && segments[activeSegment]?.matches.length > 0 && (
         <div className="border border-border rounded-xl bg-background p-4 space-y-4 shadow-sm">

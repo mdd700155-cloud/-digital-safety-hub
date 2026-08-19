@@ -48,34 +48,83 @@ export function ResultDisplay({
     indicator.toLowerCase().includes("urlhaus") ||
     /^\[(STRONG|MODERATE)\]/.test(indicator);
 
-  const sourceLabel = (indicator: string) => {
-    if (indicator.startsWith("[ML]")) return "Automated Scan";
-    if (indicator.toLowerCase().includes("urlhaus")) return "URLhaus";
-    return "URL Analysis";
-  };
-
   const mlDisplayText = (indicator: string) => {
     if (indicator.includes("LOW_RISK_SIGNAL")) {
-      return "We did find anything suspicious.";
+      return "We didn't find anything suspicious in this link.";
     }
     if (indicator.includes("SUSPICIOUS_SIGNAL")) {
-      return "This URL looks unusual — please be careful.";
+      return "This link looks unusual — please be careful.";
     }
     if (indicator.includes("HIGH_RISK_SIGNAL")) {
-      return "This URL looks like a known scam pattern — don't share any details.";
+      return "This link matches known scam patterns — don't share any details.";
     }
     return "An automated scan flagged something unusual — please be cautious.";
   };
 
-  const displayText = (indicator: string) => {
+  const friendlyIndicatorText = (indicator: string) => {
     if (indicator.startsWith("[ML]")) return mlDisplayText(indicator);
-    return indicator.replace(/^\[(STRONG|MODERATE)\] /, "");
+    if (indicator.toLowerCase().includes("urlhaus")) {
+      return "This URL is reported as associated with malware distribution (verified threat database).";
+    }
+    return indicator.replace(/^\[(STRONG|MODERATE|WEAK)\] /, "");
   };
 
-  const dangerSourceIndicators = result.warningIndicators
+  const indicatorSeverity = (
+    indicator: string
+  ): "high" | "medium" | "low" => {
+    if (indicator.toLowerCase().includes("urlhaus")) return "high";
+    if (indicator.startsWith("[ML]")) {
+      return indicator.includes("HIGH_RISK_SIGNAL")
+        ? "high"
+        : "medium";
+    }
+    if (/^\[STRONG\]/.test(indicator)) return "high";
+    if (/^\[MODERATE\]/.test(indicator)) return "medium";
+    if (/^\[WEAK\]/.test(indicator)) return "low";
+    return "medium";
+  };
+
+  const severityStyles: Record<
+    "high" | "medium" | "low",
+    {
+      badge: string;
+      badgeLabel: string;
+      border: string;
+      bg: string;
+      dot: string;
+    }
+  > = {
+    high: {
+      badge: "bg-destructive/10 text-destructive border-destructive/20",
+      badgeLabel: "Strong signal",
+      border: "border-l-destructive",
+      bg: "bg-destructive/5",
+      dot: "bg-destructive",
+    },
+    medium: {
+      badge: "bg-warning/10 text-warning-foreground border-warning/30",
+      badgeLabel: "Caution",
+      border: "border-l-warning",
+      bg: "bg-warning/5",
+      dot: "bg-warning",
+    },
+    low: {
+      badge: "bg-muted text-muted-foreground border-border",
+      badgeLabel: "Minor note",
+      border: "border-l-border",
+      bg: "bg-muted/30",
+      dot: "bg-muted-foreground",
+    },
+  };
+
+  const visibleIndicators = result.warningIndicators.filter(
+    (indicator) =>
+      !indicator.startsWith("[ML]") ||
+      !indicator.includes("LOW_RISK_SIGNAL")
+  );
+  const dangerSourceIndicators = visibleIndicators
     .filter(isDangerSource)
     .filter((i) => !(isSafe && i.startsWith("[ML]")));
-  const otherIndicators = result.warningIndicators.filter((i) => !isDangerSource(i));
   const showIndicators = !isSafe || dangerSourceIndicators.length > 0;
 
   const styles = {
@@ -105,9 +154,8 @@ export function ResultDisplay({
   const reportedUrl = isUrlContent ? reportedContent : undefined;
 
   const scamWatchDescription = [
-    `Analyzed content type: ${contentType ?? "unknown"}`,
     "Detected warning indicators:",
-    ...result.warningIndicators,
+    ...visibleIndicators.map(friendlyIndicatorText),
   ].join("\n");
 
   return (
@@ -165,7 +213,7 @@ export function ResultDisplay({
             </p>
           </div>
 
-          {!isSafe && (
+          {showIndicators && visibleIndicators.length > 0 && (
             <div>
               <h4 className="font-semibold mb-3 flex items-center text-sm">
                 <AlertCircle className="h-4 w-4 mr-2 text-danger" />
@@ -173,12 +221,42 @@ export function ResultDisplay({
               </h4>
 
               <ul className="space-y-2.5">
-                {result.warningIndicators.map((indicator: string, idx: number) => (
-                  <li key={idx} className="flex items-start text-sm">
-                    <span className="mr-2.5 mt-1.5 w-1.5 h-1.5 rounded-full bg-danger flex-shrink-0" />
-                    <span className="leading-relaxed">{indicator}</span>
-                  </li>
-                ))}
+                {visibleIndicators.map((indicator: string, idx: number) => {
+                  const severity = indicatorSeverity(indicator);
+                  const style = severityStyles[severity];
+
+                  return (
+                    <li
+                      key={idx}
+                      className={cn(
+                        "flex items-start gap-3 rounded-lg border border-l-4 p-3 text-sm",
+                        style.bg,
+                        style.border
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "mt-1.5 h-2 w-2 rounded-full shrink-0",
+                          style.dot
+                        )}
+                      />
+                      <div className="min-w-0">
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "mb-1 h-5 px-2 text-[10px] font-semibold uppercase tracking-wide",
+                            style.badge
+                          )}
+                        >
+                          {style.badgeLabel}
+                        </Badge>
+                        <p className="leading-relaxed">
+                          {friendlyIndicatorText(indicator)}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
@@ -245,7 +323,7 @@ export function ResultDisplay({
         </CardContent>
 
         {/* Footer */}
-        <CardFooter className="flex flex-col sm:flex-row gap-3 pt-2 bg-muted/20 border-t">
+        <CardFooter className="flex flex-col sm:flex-row gap-3 pt-2 bg-muted/10 border-t">
           <Button
             onClick={onReset}
             variant="outline"

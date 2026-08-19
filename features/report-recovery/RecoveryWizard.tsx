@@ -162,7 +162,7 @@ export function RecoveryWizard() {
       {step === 2 && (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
           <Card className="shadow-soft">
-            <CardHeader className="bg-primary/5 border-b">
+            <CardHeader className="bg-muted/30 border-b">
               <CardTitle className="text-xl">Immediate Action Steps</CardTitle>
               <CardDescription>Follow these steps immediately to mitigate further damage.</CardDescription>
             </CardHeader>

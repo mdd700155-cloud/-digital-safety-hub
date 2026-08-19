@@ -4,12 +4,13 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ShieldCheck, Search, Shield, RefreshCw, ArrowRight, MessageSquareWarning, Lock, Smartphone, Zap, BookOpen } from "lucide-react";
 import { ScamChecker } from "@/features/scam-check/ScamChecker";
+import { CommunityReportsPreview } from "@/components/community-reports-preview";
 
 const steps = [
   {
     icon: Search,
     title: "Check",
-    desc: "Submit suspicious messages, links, screenshots, or QR codes through our simple interface.",
+    desc: "Submit suspicious messages, links, screenshots, QR codes, audio, or face images through our simple interface.",
   },
   {
     icon: ShieldCheck,
@@ -29,7 +30,7 @@ const steps = [
 ];
 
 const stats = [
-  { value: "4", label: "Types of content you can check" },
+  { value: "6", label: "Types of content you can check" },
   { value: "20", label: "Recovery guides for real scams" },
   { value: "9", label: "Easy-to-read safety guides" },
   { value: "1930", label: "Official cyber fraud helpline" },
@@ -58,7 +59,7 @@ export default function Home() {
                 <span className="text-foreground">Check it before you act.</span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-8">
-                Instantly check suspicious messages, links, screenshots, and QR codes. Understand potential risks and receive actionable guidance.
+                Instantly check suspicious messages, links, screenshots, QR codes, audio, and face images. Understand potential risks and receive actionable guidance.
               </p>
               <div className="flex flex-col sm:flex-row items-center lg:items-start gap-4 mb-8">
                 <a
@@ -140,8 +141,8 @@ export default function Home() {
                 <span className="absolute top-5 right-5 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-sm">
                   {i + 1}
                 </span>
-                <div className="h-13 w-13 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-5 ring-1 ring-primary/10">
-                  <step.icon className="h-6.5 w-6.5" />
+                <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-5 ring-1 ring-primary/10">
+                  <step.icon className="h-6 w-6" />
                 </div>
                 <h4 className="text-lg font-semibold mb-2">{step.title}</h4>
                 <p className="text-sm text-muted-foreground leading-relaxed">{step.desc}</p>
@@ -153,8 +154,8 @@ export default function Home() {
                 4
               </span>
               <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                <div className="h-13 w-13 shrink-0 rounded-full bg-primary/10 text-primary flex items-center justify-center ring-1 ring-primary/10">
-                  <RefreshCw className="h-6.5 w-6.5" />
+                <div className="h-12 w-12 shrink-0 rounded-full bg-primary/10 text-primary flex items-center justify-center ring-1 ring-primary/10">
+                  <RefreshCw className="h-6 w-6" />
                 </div>
                 <div>
                   <h4 className="text-lg font-semibold mb-2">Recover</h4>
@@ -168,8 +169,8 @@ export default function Home() {
             <div className="relative flex flex-col items-start justify-between gap-6 overflow-hidden rounded-xl border border-primary/20 bg-muted/50 p-7 shadow-soft">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--primary)_0%,transparent_60%)] opacity-[0.04]" />
               <div className="relative">
-                <div className="h-13 w-13 rounded-full bg-primary text-primary-foreground flex items-center justify-center mb-5 shadow-sm">
-                  <BookOpen className="h-6.5 w-6.5" />
+                <div className="h-12 w-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center mb-5 shadow-sm">
+                  <BookOpen className="h-6 w-6" />
                 </div>
                 <h4 className="text-lg font-semibold mb-2">Learn the patterns</h4>
                 <p className="text-sm text-muted-foreground leading-relaxed">
@@ -185,6 +186,13 @@ export default function Home() {
               </Link>
             </div>
           </div>
+        </PageContainer>
+      </section>
+
+      {/* Community Reports */}
+      <section className="py-20 border-t border-border/40">
+        <PageContainer>
+          <CommunityReportsPreview />
         </PageContainer>
       </section>
 

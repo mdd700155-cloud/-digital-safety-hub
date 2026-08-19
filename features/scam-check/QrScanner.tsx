@@ -127,7 +127,10 @@ export function QrScanner({ onDecoded, onError }: QrScannerProps) {
           )}
 
           {cameraError ? (
-            <div className="text-sm text-destructive text-center p-3.5 bg-destructive/10 border border-destructive/20 rounded-lg w-full">
+            <div
+              role="alert"
+              className="text-sm text-destructive text-center p-3.5 bg-destructive/10 border border-destructive/20 rounded-lg w-full"
+            >
               {cameraError}
             </div>
           ) : null}

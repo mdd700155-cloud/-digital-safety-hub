@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Link as LinkIcon, Image as ImageIcon, QrCode, AudioWaveform, Loader2, UploadCloud, X, ShieldCheck, ScanFace } from "lucide-react";
+import { MessageSquare, Link as LinkIcon, Image as ImageIcon, QrCode, AudioWaveform, ScanFace, Loader2, UploadCloud, X, ShieldCheck } from "lucide-react";
 import { AnalysisResult } from "@/types/analysis";
 import { ResultDisplay } from "./ResultDisplay";
 import { QrScanner } from "./QrScanner";
@@ -146,30 +146,30 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
           }}
           className="w-full"
         >
-          <TabsList className="grid grid-cols-3 sm:grid-cols-7 mb-6 shadow-sm">
-            <TabsTrigger value="message" className="flex items-center justify-center">
-              <MessageSquare className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Message</span>
+          <TabsList className={`h-auto! grid w-full min-h-8 grid-cols-2 sm:grid-cols-3 mb-6 bg-muted shadow-sm ${compact ? "min-h-11 gap-3 p-3 sm:-mx-2 sm:w-[calc(100%+1rem)]" : "gap-2 sm:gap-2.5 p-2 sm:p-2.5"}`}>
+            <TabsTrigger value="message" className="flex items-center justify-center gap-2 px-2 py-1.5 sm:px-3 text-[11px] sm:text-sm">
+              <MessageSquare className="h-4 w-4" />
+              <span>Message</span>
             </TabsTrigger>
-            <TabsTrigger value="url" className="flex items-center justify-center">
-              <LinkIcon className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Link</span>
+            <TabsTrigger value="url" className="flex items-center justify-center gap-2 px-2 py-1.5 sm:px-3 text-[11px] sm:text-sm">
+              <LinkIcon className="h-4 w-4" />
+              <span>Link</span>
             </TabsTrigger>
-            <TabsTrigger value="screenshot" className="flex items-center justify-center">
-              <ImageIcon className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Screenshot</span>
+            <TabsTrigger value="screenshot" className="flex items-center justify-center gap-2 px-2 py-1.5 sm:px-3 text-[11px] sm:text-sm">
+              <ImageIcon className="h-4 w-4" />
+              <span>Screenshot</span>
             </TabsTrigger>
-            <TabsTrigger value="qr" className="flex items-center justify-center">
-              <QrCode className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">QR Code</span>
+            <TabsTrigger value="qr" className="flex items-center justify-center gap-2 px-2 py-1.5 sm:px-3 text-[11px] sm:text-sm">
+              <QrCode className="h-4 w-4" />
+              <span>QR Code</span>
             </TabsTrigger>
-            <TabsTrigger value="audio" className="flex items-center justify-center">
-              <AudioWaveform className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Audio</span>
+            <TabsTrigger value="audio" className="flex items-center justify-center gap-2 px-2 py-1.5 sm:px-3 text-[11px] sm:text-sm">
+              <AudioWaveform className="h-4 w-4" />
+              <span>Audio</span>
             </TabsTrigger>
-            <TabsTrigger value="deepfake-image" className="flex items-center justify-center">
-              <ScanFace className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Face</span>
+            <TabsTrigger value="deepfake-image" className="flex items-center justify-center gap-2 px-2 py-1.5 sm:px-3 text-[11px] sm:text-sm">
+              <ScanFace className="h-4 w-4" />
+              <span>Face</span>
             </TabsTrigger>
           </TabsList>
 

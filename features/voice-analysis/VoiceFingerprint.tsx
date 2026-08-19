@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 const severityColor: Record<SignalSeverity, string> = {
   HIGH: "bg-destructive",
   MEDIUM: "bg-warning",
-  LOW: "bg-primary",
+  LOW: "bg-muted-foreground",
 };
 
 export function VoiceFingerprint({ signals }: { signals: VoiceSignal[] }) {

@@ -119,7 +119,19 @@ export function DeepfakeImageDetector() {
       {/* Hidden canvas for image processing */}
       <canvas ref={canvasRef} className="hidden" />
 
-      <Card className="p-6 border-dashed border-2 bg-secondary/20">
+      <Card
+        role="button"
+        tabIndex={file ? -1 : 0}
+        aria-label="Upload a face or image to scan"
+        onClick={() => !file && fileInputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (!file && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            fileInputRef.current?.click();
+          }
+        }}
+        className="border-2 border-dashed bg-background [--card-spacing:--spacing(10)] flex flex-col items-center justify-center text-center hover:bg-muted/50 hover:border-primary/40 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring"
+      >
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
             <ScanFace className="h-6 w-6 text-primary" />
@@ -141,7 +153,7 @@ export function DeepfakeImageDetector() {
                 accept="image/jpeg,image/png,image/webp"
                 onChange={handleFileSelect}
               />
-              <Button onClick={() => fileInputRef.current?.click()}>
+              <Button type="button" onClick={() => fileInputRef.current?.click()}>
                 <Upload className="mr-2 h-4 w-4" />
                 Select Image
               </Button>
@@ -170,6 +182,7 @@ export function DeepfakeImageDetector() {
               
               <div className="flex gap-2 pt-2">
                 <Button 
+                  type="button"
                   variant="outline" 
                   className="flex-1"
                   onClick={() => {
@@ -182,6 +195,7 @@ export function DeepfakeImageDetector() {
                   Clear
                 </Button>
                 <Button 
+                  type="button"
                   className="flex-1"
                   onClick={analyzeImage}
                   disabled={isAnalyzing}
@@ -203,7 +217,10 @@ export function DeepfakeImageDetector() {
           )}
 
           {error && (
-            <div className="w-full max-w-md p-3 text-sm text-red-500 bg-red-500/10 rounded-lg border border-red-500/20">
+            <div
+              role="alert"
+              className="w-full max-w-md p-3.5 text-sm bg-destructive/10 text-destructive rounded-lg border border-destructive/20"
+            >
               {error}
             </div>
           )}

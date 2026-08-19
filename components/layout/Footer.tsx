@@ -4,6 +4,7 @@ import { PageContainer } from "./PageContainer";
 
 const exploreLinks = [
   { href: "/check", label: "Scam Check" },
+  { href: "/scamwatch", label: "ScamWatch" },
   { href: "/report", label: "Report & Recover" },
   { href: "/learn", label: "Safety Hub" },
 ];
@@ -21,7 +22,7 @@ export function Footer() {
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <ShieldCheck className="h-4.5 w-4.5" />
+                <ShieldCheck className="h-4 w-4" />
               </span>
               <span className="text-base font-bold tracking-tight">Digital Safety Hub</span>
             </div>

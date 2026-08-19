@@ -29,7 +29,7 @@ export function UnifiedAudioResult({
       </div>
 
       <Tabs defaultValue="intent" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsList className="grid w-full grid-cols-2 gap-1.5 sm:gap-2 p-1.5 sm:p-2 mb-6 shadow-sm">
           <TabsTrigger value="intent" className="flex items-center gap-2">
             <ShieldAlert className="h-4 w-4" />
             <span className="hidden sm:inline">Scam & Intent</span>
@@ -52,7 +52,7 @@ export function UnifiedAudioResult({
       </Tabs>
 
       <div className="flex justify-center pt-8 border-t">
-        <Button variant="default" size="lg" onClick={onReset} className="w-full sm:w-auto">
+        <Button type="button" variant="default" size="lg" onClick={onReset} className="w-full sm:w-auto">
           <RotateCcw className="mr-2 h-4 w-4" />
           Analyze Another Audio File
         </Button>

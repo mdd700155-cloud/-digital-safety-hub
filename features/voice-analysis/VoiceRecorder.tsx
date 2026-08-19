@@ -11,6 +11,7 @@ interface VoiceRecorderProps {
 }
 
 export function VoiceRecorder({ onRecorded, onError }: VoiceRecorderProps) {
+  const MAX_DURATION_SECONDS = 180;
   const [isRecording, setIsRecording] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -78,7 +79,11 @@ export function VoiceRecorder({ onRecorded, onError }: VoiceRecorderProps) {
       setIsStarting(false);
 
       timerRef.current = setInterval(() => {
-        setElapsed((Date.now() - startedAtRef.current) / 1000);
+        const currentElapsed = (Date.now() - startedAtRef.current) / 1000;
+        setElapsed(currentElapsed);
+        if (currentElapsed >= MAX_DURATION_SECONDS) {
+          mediaRecorderRef.current?.stop();
+        }
       }, 250);
     } catch {
       setIsStarting(false);

@@ -2,7 +2,21 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Sparkles,
+  ShieldCheck,
+  ShieldAlert,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 
 type ReportScamFormProps = {
   onSubmitted: () => void;
@@ -88,7 +102,7 @@ export default function ReportScamForm({
   }
 
   return (
-    <div className="rounded-2xl border p-6 shadow-sm">
+    <Card className="p-6 shadow-soft">
       <div className="mb-6">
         <div className="flex items-center justify-between gap-3">
           <div>
@@ -103,16 +117,18 @@ export default function ReportScamForm({
           </div>
 
           {fromScan && (
-            <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-              ✨ From Scam Check
-            </span>
+            <Badge className="shrink-0 gap-1 border-primary/20 bg-primary/10 text-primary">
+              <Sparkles className="h-3 w-3" />
+              From Scam Check
+            </Badge>
           )}
         </div>
 
         {fromScan && (
           <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4">
-            <p className="text-sm font-semibold">
-              🛡️ Analysis imported
+            <p className="flex items-center gap-1.5 text-sm font-semibold">
+              <ShieldCheck className="h-4 w-4 text-primary" />
+              Analysis imported
             </p>
 
             <p className="mt-1 text-xs text-muted-foreground">
@@ -125,30 +141,27 @@ export default function ReportScamForm({
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Scam Type */}
-        <div>
-          <label className="mb-2 block text-sm font-medium">
-            Scam type
-          </label>
+        <div className="space-y-2">
+          <Label htmlFor="scam-type">Scam type</Label>
 
-          <input
+          <Input
+            id="scam-type"
             value={scamType}
             onChange={(e) => setScamType(e.target.value)}
             placeholder="e.g. Fake KYC / Phishing"
             required
-            className="w-full rounded-lg border bg-background px-4 py-2.5 outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
 
         {/* Risk Level */}
-        <div>
-          <label className="mb-2 block text-sm font-medium">
-            Risk level
-          </label>
+        <div className="space-y-2">
+          <Label htmlFor="risk-level">Risk level</Label>
 
           <select
+            id="risk-level"
             value={riskLevel}
             onChange={(e) => setRiskLevel(e.target.value)}
-            className="w-full rounded-lg border bg-background px-4 py-2.5 outline-none focus:ring-2 focus:ring-primary/30"
+            className="h-8 w-full rounded-lg border border-input bg-background px-2.5 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <option value="HIGH_RISK">High Risk</option>
             <option value="SUSPICIOUS">Suspicious</option>
@@ -157,75 +170,86 @@ export default function ReportScamForm({
         </div>
 
         {/* Message */}
-        <div>
-          <label className="mb-2 block text-sm font-medium">
-            Scam message
-          </label>
+        <div className="space-y-2">
+          <Label htmlFor="scam-message">Scam message</Label>
 
-          <textarea
+          <Textarea
+            id="scam-message"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Paste the suspicious message..."
             rows={5}
-            className="w-full rounded-lg border bg-background px-4 py-2.5 outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
 
         {/* URL */}
-        <div>
-          <label className="mb-2 block text-sm font-medium">
-            Suspicious URL
-          </label>
+        <div className="space-y-2">
+          <Label htmlFor="suspicious-url">Suspicious URL</Label>
 
-          <input
+          <Input
+            id="suspicious-url"
+            type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="https://..."
-            className="w-full rounded-lg border bg-background px-4 py-2.5 outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
 
         {/* Description */}
-        <div>
-          <label className="mb-2 block text-sm font-medium">
-            What happened?
-          </label>
+        <div className="space-y-2">
+          <Label htmlFor="description">What happened?</Label>
 
-          <textarea
+          <Textarea
+            id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Briefly describe what happened..."
             rows={4}
-            className="w-full rounded-lg border bg-background px-4 py-2.5 outline-none focus:ring-2 focus:ring-primary/30"
           />
         </div>
 
         {/* Submit */}
-        <button
+        <Button
           type="submit"
+          className="w-full"
           disabled={submitting || !scamType.trim()}
-          className="w-full rounded-lg bg-primary px-4 py-3 font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {submitting
-            ? "Publishing..."
-            : "🛡️ Publish Scam Warning"}
-        </button>
+          {submitting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Publishing...
+            </>
+          ) : (
+            <>
+              <ShieldAlert className="h-4 w-4" />
+              Publish Scam Warning
+            </>
+          )}
+        </Button>
 
         {/* Success */}
         {success && (
-          <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm font-medium text-green-700">
-            ✅ Scam warning published successfully. You just helped
+          <div
+            role="status"
+            className="flex items-start gap-2 rounded-lg border border-success/30 bg-success/10 p-3 text-sm font-medium text-success-foreground"
+          >
+            <CheckCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            Scam warning published successfully. You just helped
             protect the community!
           </div>
         )}
 
         {/* Error */}
         {error && (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
-            ❌ {error}
+          <div
+            role="alert"
+            className="flex items-start gap-2 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm font-medium text-destructive"
+          >
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            {error}
           </div>
         )}
       </form>
-    </div>
+    </Card>
   );
 }

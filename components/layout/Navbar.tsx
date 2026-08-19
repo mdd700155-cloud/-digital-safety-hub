@@ -19,10 +19,10 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <PageContainer>
-        <div className="flex h-16 items-center justify-between gap-3">
+        <div className="flex min-h-16 items-center justify-between gap-3 py-3">
           <Link href="/" className="flex items-center gap-2.5 group shrink-0">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm transition-transform group-hover:scale-105">
-              <ShieldCheck className="h-4.5 w-4.5" />
+              <ShieldCheck className="h-4 w-4" />
             </span>
 
             <span className="text-base sm:text-lg font-bold tracking-tight hidden sm:inline-block">
@@ -30,7 +30,10 @@ export function Navbar() {
             </span>
           </Link>
 
-          <nav className="flex items-center gap-0.5 sm:gap-1.5 text-xs sm:text-sm font-medium text-muted-foreground">
+          <nav
+            aria-label="Main navigation"
+            className="flex items-center justify-end gap-0.5 whitespace-nowrap text-[11px] sm:text-sm font-medium text-muted-foreground"
+          >
             {navLinks.map((link) => {
               const isActive =
                 pathname === link.href ||
@@ -40,12 +43,20 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "rounded-md px-1.5 py-1.5 transition-colors hover:text-foreground sm:px-3",
-                    isActive && "bg-primary/10 text-primary shadow-sm"
+                    "rounded-md px-1.5 py-2 transition-colors hover:text-foreground sm:px-3",
+                    isActive && "bg-primary/10 text-primary"
                   )}
                 >
-                  {link.label}
+                  {link.label === "Report & Recover" ? (
+                    <>
+                      <span className="sm:hidden">Report</span>
+                      <span className="hidden sm:inline">{link.label}</span>
+                    </>
+                  ) : (
+                    link.label
+                  )}
                 </Link>
               );
             })}

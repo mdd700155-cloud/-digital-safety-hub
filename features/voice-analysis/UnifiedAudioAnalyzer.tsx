@@ -158,6 +158,7 @@ export function UnifiedAudioAnalyzer() {
           />
           
           <Button 
+            type="button"
             className="w-full" 
             size="lg" 
             onClick={handleAnalyze}
@@ -168,7 +169,10 @@ export function UnifiedAudioAnalyzer() {
           </Button>
 
           {error && (
-            <div className="p-4 bg-destructive/10 text-destructive text-sm rounded-lg border border-destructive/20">
+            <div
+              role="alert"
+              className="p-3.5 bg-destructive/10 text-destructive text-sm rounded-lg border border-destructive/20"
+            >
               {error}
             </div>
           )}

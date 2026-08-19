@@ -108,8 +108,17 @@ export function EducationDashboard() {
         {safetyTopics.map((topic, idx) => (
           <Card
             key={topic.id}
+            role="button"
+            tabIndex={0}
+            aria-label={`Open guide: ${topic.title}`}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setSelectedTopic(topic);
+              }
+            }}
             className={cn(
-              "cursor-pointer transition-all hover:shadow-lift hover:border-primary/50 group flex flex-col h-full",
+              "cursor-pointer transition-all hover:shadow-lift hover:border-primary/50 group focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-primary/50 flex flex-col h-full",
               idx === safetyTopics.length - 1 && safetyTopics.length % 2 !== 0 && "sm:col-span-2"
             )}
             onClick={() => setSelectedTopic(topic)}

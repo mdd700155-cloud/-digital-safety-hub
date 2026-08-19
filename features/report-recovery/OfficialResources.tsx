@@ -8,9 +8,9 @@ import { cn } from "@/lib/utils";
 const resources = [
   {
     icon: Phone,
-    iconClass: "bg-red-100 text-red-600",
+    iconClass: "bg-danger/10 text-danger",
     title: "Financial Cyber Fraud Helpline",
-    titleClass: "text-red-600",
+    titleClass: "text-danger",
     domain: null,
     highlight: "1930",
     description:
@@ -21,7 +21,7 @@ const resources = [
   },
   {
     icon: Globe,
-    iconClass: "bg-blue-100 text-blue-600",
+    iconClass: "bg-primary/10 text-primary",
     title: "National Cyber Crime Reporting Portal",
     titleClass: null,
     domain: "cybercrime.gov.in",
@@ -33,7 +33,7 @@ const resources = [
   },
   {
     icon: ShieldAlert,
-    iconClass: "bg-orange-100 text-orange-600",
+    iconClass: "bg-warning/10 text-warning",
     title: "Report a Suspect Identifier",
     titleClass: null,
     domain: "cybercrime.gov.in",
@@ -45,7 +45,7 @@ const resources = [
   },
   {
     icon: Search,
-    iconClass: "bg-purple-100 text-purple-600",
+    iconClass: "bg-secondary text-secondary-foreground",
     title: "Check the Suspect Repository",
     titleClass: null,
     domain: "cybercrime.gov.in",

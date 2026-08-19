@@ -19,6 +19,26 @@ export function ResultDisplay({ result, onReset }: ResultDisplayProps) {
   const isSuspicious = result.level === "SUSPICIOUS";
   const isHighRisk = result.level === "HIGH_RISK";
 
+  const isDangerSource = (indicator: string) =>
+    indicator.startsWith("[ML]") ||
+    indicator.toLowerCase().includes("urlhaus") ||
+    /^\[(STRONG|MODERATE)\]/.test(indicator);
+
+  const sourceLabel = (indicator: string) => {
+    if (indicator.startsWith("[ML]")) return "ML Model";
+    if (indicator.toLowerCase().includes("urlhaus")) return "URLhaus";
+    return "URL Analysis";
+  };
+
+  const displayText = (indicator: string) =>
+    indicator.replace(/^\[(STRONG|MODERATE)\] /, "");
+
+  const dangerSourceIndicators = result.warningIndicators
+    .filter(isDangerSource)
+    .filter((i) => !(isSafe && i.startsWith("[ML]")));
+  const otherIndicators = result.warningIndicators.filter((i) => !isDangerSource(i));
+  const showIndicators = !isSafe || dangerSourceIndicators.length > 0;
+
   const styles = {
     card: isSafe
       ? "border-success/40"
@@ -60,14 +80,30 @@ export function ResultDisplay({ result, onReset }: ResultDisplayProps) {
             <p className="text-sm leading-relaxed">{result.summary}</p>
           </div>
 
-          {!isSafe && (
+          {showIndicators && (
             <div>
               <h4 className="font-semibold mb-3 flex items-center text-sm">
                 <AlertCircle className="h-4 w-4 mr-2 text-danger" />
                 Warning Indicators Detected
               </h4>
               <ul className="space-y-2.5">
-                {result.warningIndicators.map((indicator: string, idx: number) => (
+                {dangerSourceIndicators.map((indicator: string, idx: number) => (
+                  <li
+                    key={`source-${idx}`}
+                    className="flex items-start text-sm rounded-lg bg-danger/10 border border-danger/30 p-3"
+                  >
+                    <Badge
+                      variant="destructive"
+                      className="bg-danger text-danger-foreground border-danger/40 mr-2.5 mt-0.5 flex-shrink-0"
+                    >
+                      {sourceLabel(indicator)}
+                    </Badge>
+                    <span className="leading-relaxed text-danger font-medium">
+                      {displayText(indicator)}
+                    </span>
+                  </li>
+                ))}
+                {otherIndicators.map((indicator: string, idx: number) => (
                   <li key={idx} className="flex items-start text-sm">
                     <span className="mr-2.5 mt-1.5 w-1.5 h-1.5 rounded-full bg-danger flex-shrink-0" />
                     <span className="leading-relaxed">{indicator}</span>

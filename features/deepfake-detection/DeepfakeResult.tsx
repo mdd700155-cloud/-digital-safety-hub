@@ -22,7 +22,7 @@ import { formatDuration, formatFileSize } from "@/features/voice-analysis/audioU
 
 interface DeepfakeResultProps {
   result: DeepfakeAnalysisResult;
-  onReset: () => void;
+  onReset?: () => void;
 }
 
 const CATEGORY_LABELS: Record<DeepfakeFeatureScore["category"], string> = {
@@ -277,10 +277,14 @@ export function DeepfakeResult({ result, onReset }: DeepfakeResultProps) {
 
       {/* Actions */}
       <div className="flex flex-wrap justify-between items-center gap-3 border-t pt-4">
-        <Button type="button" variant="outline" onClick={onReset}>
-          <RotateCcw className="h-4 w-4 mr-2" />
-          Check Another Audio
-        </Button>
+        {onReset && (
+          <div className="flex justify-center pt-4">
+            <Button variant="outline" onClick={onReset} className="w-full sm:w-auto">
+              <RotateCcw className="mr-2 h-4 w-4" />
+              Analyze Another Audio File
+            </Button>
+          </div>
+        )}
         <Link
           href="/report"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"

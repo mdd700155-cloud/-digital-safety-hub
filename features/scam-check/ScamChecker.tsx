@@ -8,11 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Link as LinkIcon, Image as ImageIcon, QrCode, Mic, Loader2, UploadCloud, X, ShieldCheck } from "lucide-react";
+import { MessageSquare, Link as LinkIcon, Image as ImageIcon, QrCode, Mic, AudioWaveform, Loader2, UploadCloud, X, ShieldCheck } from "lucide-react";
 import { AnalysisResult } from "@/types/analysis";
 import { ResultDisplay } from "./ResultDisplay";
 import { QrScanner } from "./QrScanner";
 import { VoiceAnalyzer } from "@/features/voice-analysis/VoiceAnalyzer";
+import { DeepfakeDetector } from "@/features/deepfake-detection/DeepfakeDetector";
 
 interface ScamCheckerProps {
   compact?: boolean;
@@ -145,7 +146,7 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
           }}
           className="w-full"
         >
-          <TabsList className="grid grid-cols-5 mb-6 shadow-sm">
+          <TabsList className="grid grid-cols-3 sm:grid-cols-6 mb-6 shadow-sm">
             <TabsTrigger value="message" className="flex items-center justify-center">
               <MessageSquare className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Message</span>
@@ -165,6 +166,10 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
             <TabsTrigger value="voice" className="flex items-center justify-center">
               <Mic className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Voice</span>
+            </TabsTrigger>
+            <TabsTrigger value="deepfake" className="flex items-center justify-center">
+              <AudioWaveform className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Deepfake</span>
             </TabsTrigger>
           </TabsList>
 
@@ -286,8 +291,12 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
               <VoiceAnalyzer />
             </TabsContent>
 
-            {/* Submit button — not shown for QR (auto-triggered) or Voice (own controls) */}
-            {activeTab !== "qr" && activeTab !== "voice" && (
+            <TabsContent value="deepfake" className="space-y-4 mt-0">
+              <DeepfakeDetector />
+            </TabsContent>
+
+            {/* Submit button — not shown for QR (auto-triggered), Voice, or Deepfake (own controls) */}
+            {activeTab !== "qr" && activeTab !== "voice" && activeTab !== "deepfake" && (
               <div className="flex justify-end pt-4 border-t mt-6">
                 {inputValue && (
                   <Button type="button" variant="ghost" className="mr-2" onClick={handleReset}>

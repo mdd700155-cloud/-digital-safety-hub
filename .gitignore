@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# large data files & notebooks
+*.zip
+*.ipynb
+*.h5
+*.pkl
+*.onnx

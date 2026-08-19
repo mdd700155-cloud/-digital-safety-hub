@@ -25,13 +25,28 @@ export function ResultDisplay({ result, onReset }: ResultDisplayProps) {
     /^\[(STRONG|MODERATE)\]/.test(indicator);
 
   const sourceLabel = (indicator: string) => {
-    if (indicator.startsWith("[ML]")) return "ML Model";
+    if (indicator.startsWith("[ML]")) return "Automated Scan";
     if (indicator.toLowerCase().includes("urlhaus")) return "URLhaus";
     return "URL Analysis";
   };
 
-  const displayText = (indicator: string) =>
-    indicator.replace(/^\[(STRONG|MODERATE)\] /, "");
+  const mlDisplayText = (indicator: string) => {
+    if (indicator.includes("LOW_RISK_SIGNAL")) {
+      return "We did find anything suspicious.";
+    }
+    if (indicator.includes("SUSPICIOUS_SIGNAL")) {
+      return "This URL looks unusual — please be careful.";
+    }
+    if (indicator.includes("HIGH_RISK_SIGNAL")) {
+      return "This URL looks like a known scam pattern — don't share any details.";
+    }
+    return "An automated scan flagged something unusual — please be cautious.";
+  };
+
+  const displayText = (indicator: string) => {
+    if (indicator.startsWith("[ML]")) return mlDisplayText(indicator);
+    return indicator.replace(/^\[(STRONG|MODERATE)\] /, "");
+  };
 
   const dangerSourceIndicators = result.warningIndicators
     .filter(isDangerSource)

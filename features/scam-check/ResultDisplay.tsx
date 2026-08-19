@@ -24,15 +24,20 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { WarnCommunityButton } from "@/components/warn-community-button";
 
 interface ResultDisplayProps {
   result: AnalysisResult;
   onReset: () => void;
+  reportedContent?: string;
+  contentType?: string;
 }
 
 export function ResultDisplay({
   result,
   onReset,
+  reportedContent,
+  contentType,
 }: ResultDisplayProps) {
   const isSafe = result.level === "SAFE";
   const isSuspicious = result.level === "SUSPICIOUS";
@@ -88,27 +93,22 @@ export function ResultDisplay({
   };
 
   /*
-   * Build the ScamWatch URL.
+   * Build the ScamWatch pre-fill data.
    *
    * The suspicious content and analysis information are passed
    * through the URL so ScamWatch can pre-fill the report form.
    */
-  const scamWatchParams = new URLSearchParams({
-    scamType: isHighRisk
-      ? "Potential Scam"
-      : "Suspicious Activity",
+  const isUrlContent = contentType === "url";
+  const reportedMessage = isUrlContent
+    ? result.summary
+    : reportedContent || result.summary;
+  const reportedUrl = isUrlContent ? reportedContent : undefined;
 
-    riskLevel: result.level,
-
-    message: result.summary,
-
-    description: [
-      "Detected warning indicators:",
-      ...result.warningIndicators,
-    ].join("\n"),
-  });
-
-  const scamWatchUrl = `/scamwatch?${scamWatchParams.toString()}`;
+  const scamWatchDescription = [
+    `Analyzed content type: ${contentType ?? "unknown"}`,
+    "Detected warning indicators:",
+    ...result.warningIndicators,
+  ].join("\n");
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -228,19 +228,14 @@ export function ResultDisplay({
               </div>
 
               {/* NEW: Pre-filled ScamWatch link */}
-              <Link
-                href={scamWatchUrl}
-                className={cn(
-                  buttonVariants({ variant: "default" }),
-                  "mt-4 w-full"
-                )}
-              >
-                <Users className="mr-2 h-4 w-4" />
-
-                Warn the Community
-
-                <ArrowRight className="ml-auto h-4 w-4" />
-              </Link>
+              <WarnCommunityButton
+                scamType={isHighRisk ? "Potential Scam" : "Suspicious Activity"}
+                riskLevel={result.level}
+                message={reportedMessage}
+                description={scamWatchDescription}
+                url={reportedUrl}
+                className="mt-4 w-full"
+              />
 
               <p className="mt-2 text-center text-xs text-muted-foreground">
                 Your analysis will be used to pre-fill the report.

@@ -1,5 +1,6 @@
 import { DeepfakeImageAnalysisResult } from "@/types/deepfakeImageAnalysis";
 import { AlertTriangle, CheckCircle, HelpCircle, FileImage, Info } from "lucide-react";
+import { WarnCommunityButton } from "@/components/warn-community-button";
 
 interface DeepfakeImageResultProps {
   result: DeepfakeImageAnalysisResult;
@@ -44,6 +45,17 @@ export function DeepfakeImageResult({ result }: DeepfakeImageResultProps) {
         return <Info className="h-8 w-8 text-gray-500" />;
     }
   };
+
+  const isSynthetic = result.riskLevel === "LIKELY_SYNTHETIC";
+  const isUncertain = result.riskLevel === "UNCERTAIN";
+
+  const warnDescription = [
+    `AI image deepfake analysis — ${result.probability}% synthetic probability.`,
+    "Key findings:",
+    ...result.featureScores.slice(0, 4).map(
+      (f) => `- ${f.name}: ${f.score}/100 — ${f.explanation}`
+    ),
+  ].join("\n");
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -132,6 +144,16 @@ export function DeepfakeImageResult({ result }: DeepfakeImageResultProps) {
       <p className="text-[10px] text-muted-foreground text-center italic mt-4">
         {result.disclaimer}
       </p>
+
+      {!isSynthetic && !isUncertain ? null : (
+        <WarnCommunityButton
+          scamType={isSynthetic ? "AI-Generated / Deepfake Image Scam" : "Suspicious Image"}
+          riskLevel={isSynthetic ? "HIGH_RISK" : "SUSPICIOUS"}
+          message={result.summary}
+          description={warnDescription}
+          className="w-full"
+        />
+      )}
     </div>
   );
 }

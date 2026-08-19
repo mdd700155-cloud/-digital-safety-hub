@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 type ReportScamFormProps = {
@@ -10,55 +11,41 @@ type ReportScamFormProps = {
 export default function ReportScamForm({
   onSubmitted,
 }: ReportScamFormProps) {
-  const [scamType, setScamType] = useState("");
-  const [riskLevel, setRiskLevel] = useState("HIGH_RISK");
-  const [message, setMessage] = useState("");
-  const [url, setUrl] = useState("");
-  const [description, setDescription] = useState("");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  const [scamType, setScamType] = useState(
+    () => searchParams.get("scamType") ?? ""
+  );
+  const [riskLevel, setRiskLevel] = useState(() => {
+    const level = searchParams.get("riskLevel");
+    return level === "HIGH_RISK" ||
+      level === "SUSPICIOUS" ||
+      level === "SAFE"
+      ? level
+      : "HIGH_RISK";
+  });
+  const [message, setMessage] = useState(
+    () => searchParams.get("message") ?? ""
+  );
+  const [url, setUrl] = useState(
+    () => searchParams.get("url") ?? ""
+  );
+  const [description, setDescription] = useState(
+    () => searchParams.get("description") ?? ""
+  );
 
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
-  const [fromScan, setFromScan] = useState(false);
 
-  // Read information passed from Scam Check
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-
-    const incomingScamType = params.get("scamType");
-    const incomingRiskLevel = params.get("riskLevel");
-    const incomingMessage = params.get("message");
-    const incomingDescription = params.get("description");
-
-    if (
-      incomingScamType ||
-      incomingRiskLevel ||
-      incomingMessage ||
-      incomingDescription
-    ) {
-      setFromScan(true);
-    }
-
-    if (incomingScamType) {
-      setScamType(incomingScamType);
-    }
-
-    if (
-      incomingRiskLevel === "HIGH_RISK" ||
-      incomingRiskLevel === "SUSPICIOUS" ||
-      incomingRiskLevel === "SAFE"
-    ) {
-      setRiskLevel(incomingRiskLevel);
-    }
-
-    if (incomingMessage) {
-      setMessage(incomingMessage);
-    }
-
-    if (incomingDescription) {
-      setDescription(incomingDescription);
-    }
-  }, []);
+  const fromScan = Boolean(
+    searchParams.get("scamType") ||
+      searchParams.get("riskLevel") ||
+      searchParams.get("message") ||
+      searchParams.get("url") ||
+      searchParams.get("description")
+  );
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -97,9 +84,7 @@ export default function ReportScamForm({
     setDescription("");
 
     // Remove the pre-filled URL parameters after successful submission
-    window.history.replaceState({}, "", "/scamwatch");
-
-    setFromScan(false);
+    router.replace("/scamwatch");
   }
 
   return (

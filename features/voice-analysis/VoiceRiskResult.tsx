@@ -25,7 +25,7 @@ import { formatDuration, formatFileSize } from "./audioUtils";
 interface VoiceRiskResultProps {
   result: VoiceAnalysisResult;
   audio: AudioPreviewData;
-  onReset: () => void;
+  onReset?: () => void;
 }
 
 export function VoiceRiskResult({ result, audio, onReset }: VoiceRiskResultProps) {
@@ -205,10 +205,12 @@ export function VoiceRiskResult({ result, audio, onReset }: VoiceRiskResultProps
       </div>
 
       <div className="flex flex-wrap justify-between items-center gap-3 border-t pt-4">
-        <Button type="button" variant="outline" onClick={onReset}>
-          <RotateCcw className="h-4 w-4 mr-2" />
-          Check Something Else
-        </Button>
+        {onReset && (
+          <Button type="button" variant="outline" onClick={onReset}>
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Check Something Else
+          </Button>
+        )}
         <Link
           href="/report"
           className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"

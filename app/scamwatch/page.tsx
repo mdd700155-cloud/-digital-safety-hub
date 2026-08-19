@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   Search,
@@ -33,7 +33,20 @@ export default function ScamWatchPage() {
   const [search, setSearch] = useState("");
   const [riskFilter, setRiskFilter] = useState("ALL");
 
-  const [seenReports, setSeenReports] = useState<string[]>([]);
+  const [seenReports, setSeenReports] = useState<string[]>(() => {
+    if (typeof window === "undefined") return [];
+
+    const saved = localStorage.getItem("scamwatch_seen");
+
+    if (!saved) return [];
+
+    try {
+      return JSON.parse(saved);
+    } catch {
+      localStorage.removeItem("scamwatch_seen");
+      return [];
+    }
+  });
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   async function loadReports() {
@@ -54,17 +67,29 @@ export default function ScamWatchPage() {
   }
 
   useEffect(() => {
-    loadReports();
+    let cancelled = false;
 
-    const saved = localStorage.getItem("scamwatch_seen");
+    supabase
+      .from("scam_reports")
+      .select(
+        "id, scam_type, risk_level, message, url, description, seen_count, created_at"
+      )
+      .order("created_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (cancelled) return;
 
-    if (saved) {
-      try {
-        setSeenReports(JSON.parse(saved));
-      } catch {
-        localStorage.removeItem("scamwatch_seen");
-      }
-    }
+        if (!error && data) {
+          setReports(data);
+        } else if (error) {
+          console.error("Failed to load scam reports:", error);
+        }
+
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   async function confirmSeen(report: ScamReport) {
@@ -261,7 +286,9 @@ export default function ScamWatchPage() {
 
         {/* REPORT FORM */}
         <section className="mb-16">
-          <ReportScamForm onSubmitted={loadReports} />
+          <Suspense fallback={null}>
+            <ReportScamForm onSubmitted={loadReports} />
+          </Suspense>
         </section>
 
         {/* COMMUNITY REPORTS */}

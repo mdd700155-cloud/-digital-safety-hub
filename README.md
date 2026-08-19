@@ -36,6 +36,12 @@ Users can upload or record audio to check whether a voice is real or AI-generate
 
 The system analyzes the audio and provides:
 
+- **URL Analysis**: Scans URLs for phishing characteristics, reputation, and structural anomalies.
+- **QR Code Scanning**: Uses html5-qrcode to scan and validate URLs embedded in QR codes.
+- **Deepfake Voice Detection**: Uses a dual-layer approach (client-side spectral/prosody heuristics + Gemini AI forensics) to detect AI-cloned voices.
+- **Deepfake Face/Image Detection**: Uses client-side image signal processing (CS-LBP texture entropy, Laplacian variance) combined with Gemini AI analysis to identify synthetic faces and AI-generated images.
+- **Recovery Guides**: Provides actionable, non-technical steps for users who may have fallen victim to a scam.
+
 - 🟢 **Likely Authentic** — Voice characteristics are consistent with natural human speech.
 - 🟡 **Uncertain** — Mixed signals; could be real or synthetic.
 - 🔴 **Likely Synthetic** — Multiple characteristics indicate AI-generated or cloned speech.

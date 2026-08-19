@@ -232,23 +232,22 @@ function aggregateDeepfakeResult(
   featureScores: DeepfakeFeatureScore[]
 ): { probability: number; riskLevel: DeepfakeRiskLevel; summary: string; recommendations: string[] } {
   if (geminiResult) {
-    // Weighted: 65% Gemini, 35% client-side features
-    const combined = Math.round(geminiResult.probability * 0.65 + clientFeatureScore * 0.35);
+    // Suspicion-weighted average: give 75% weight to whichever analysis 
+    // indicates a higher probability of being synthetic. This ensures that 
+    // if either Gemini OR client-side features detect strong synthetic 
+    // indicators, the final score reflects that suspicion.
+    const maxScore = Math.max(geminiResult.probability, clientFeatureScore);
+    const minScore = Math.min(geminiResult.probability, clientFeatureScore);
+    const combined = Math.round(maxScore * 0.75 + minScore * 0.25);
 
     // Determine risk level based on combined score
     let riskLevel: DeepfakeRiskLevel;
-    if (combined >= 65) {
+    if (combined >= 60) {
       riskLevel = "LIKELY_SYNTHETIC";
-    } else if (combined >= 35) {
+    } else if (combined >= 30) {
       riskLevel = "UNCERTAIN";
     } else {
       riskLevel = "LIKELY_AUTHENTIC";
-    }
-
-    // If Gemini and client-side disagree significantly, lean toward UNCERTAIN
-    const disagreement = Math.abs(geminiResult.probability - clientFeatureScore);
-    if (disagreement > 40 && riskLevel !== "UNCERTAIN") {
-      riskLevel = "UNCERTAIN";
     }
 
     return {
@@ -261,9 +260,9 @@ function aggregateDeepfakeResult(
 
   // Client-side only (no Gemini)
   let riskLevel: DeepfakeRiskLevel;
-  if (clientFeatureScore >= 60) {
+  if (clientFeatureScore >= 45) { // Lowered from 60 to make it highly sensitive
     riskLevel = "LIKELY_SYNTHETIC";
-  } else if (clientFeatureScore >= 35) {
+  } else if (clientFeatureScore >= 25) { // Lowered from 35
     riskLevel = "UNCERTAIN";
   } else {
     riskLevel = "LIKELY_AUTHENTIC";

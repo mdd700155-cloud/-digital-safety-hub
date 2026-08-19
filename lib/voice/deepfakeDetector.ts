@@ -219,14 +219,13 @@ function analyzePitchRegularity(channelData: Float32Array, sampleRate: number): 
   }
   const avgJitter = mean(jitters);
 
-  // Very low variation or very low jitter = suspicious (too smooth/robotic)
-  // Natural speech: CoV typically 0.05–0.25, jitter typically 0.01–0.05
+  // Natural speech: CoV typically 0.1–0.25, jitter typically 0.02–0.05
   let score = 0;
-  if (coeffOfVariation < 0.03) score += 45; // Unnaturally constant pitch
-  else if (coeffOfVariation < 0.05) score += 25;
+  if (coeffOfVariation < 0.08) score += 60; // Unnaturally constant pitch (increased sensitivity)
+  else if (coeffOfVariation < 0.12) score += 40;
 
-  if (avgJitter < 0.005) score += 35; // Unnaturally smooth transitions
-  else if (avgJitter < 0.01) score += 15;
+  if (avgJitter < 0.015) score += 50; // Unnaturally smooth transitions
+  else if (avgJitter < 0.025) score += 25;
 
   score = clamp(score, 0, 100);
 
@@ -269,11 +268,11 @@ function analyzeZCR(channelData: Float32Array, sampleRate: number): DeepfakeFeat
   // Natural speech has high ZCR variation (voiced vs unvoiced segments)
   // Synthetic speech often has more uniform ZCR
   let score = 0;
-  if (zcrCoV < 0.3) score += 40; // Too uniform
-  else if (zcrCoV < 0.5) score += 20;
+  if (zcrCoV < 0.45) score += 60; // Too uniform
+  else if (zcrCoV < 0.65) score += 35;
 
   // Also check if ZCR is unnaturally low overall (over-smoothed audio)
-  if (zcrMean < 0.02) score += 20;
+  if (zcrMean < 0.025) score += 30;
 
   score = clamp(score, 0, 100);
 
@@ -321,12 +320,12 @@ function analyzeAmplitudeEnvelope(channelData: Float32Array, sampleRate: number)
   let score = 0;
 
   // Too-smooth dynamics = suspicious
-  if (deltaStd < 0.005) score += 35;
-  else if (deltaStd < 0.01) score += 15;
+  if (deltaStd < 0.015) score += 50;
+  else if (deltaStd < 0.025) score += 30;
 
   // Low dynamic range = suspicious
-  if (dynamicRange < 0.2) score += 30;
-  else if (dynamicRange < 0.35) score += 10;
+  if (dynamicRange < 0.35) score += 45;
+  else if (dynamicRange < 0.5) score += 25;
 
   score = clamp(score, 0, 100);
 
@@ -458,11 +457,11 @@ function analyzeHNR(channelData: Float32Array, sampleRate: number): DeepfakeFeat
   // Very high HNR (> 25 dB) = suspiciously clean
   // Very consistent HNR = suspiciously uniform
   let score = 0;
-  if (avgHNR > 30) score += 40; // Extremely clean — likely synthetic
-  else if (avgHNR > 25) score += 25;
+  if (avgHNR > 22) score += 60; // Extremely clean — likely synthetic
+  else if (avgHNR > 18) score += 35;
 
-  if (hnrStd < 2) score += 25; // Too consistent
-  else if (hnrStd < 4) score += 10;
+  if (hnrStd < 3.5) score += 45; // Too consistent
+  else if (hnrStd < 5.5) score += 20;
 
   score = clamp(score, 0, 100);
 
@@ -506,9 +505,9 @@ function analyzeTemporalMicroVariation(channelData: Float32Array, sampleRate: nu
 
   // Low acceleration variation = unnaturally smooth temporal dynamics
   let score = 0;
-  if (accelStd < 0.0001) score += 45;
-  else if (accelStd < 0.0005) score += 25;
-  else if (accelStd < 0.001) score += 10;
+  if (accelStd < 0.002) score += 60;
+  else if (accelStd < 0.008) score += 40;
+  else if (accelStd < 0.015) score += 20;
 
   score = clamp(score, 0, 100);
 

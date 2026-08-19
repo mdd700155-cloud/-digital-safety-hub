@@ -10,6 +10,7 @@ const navLinks = [
   { href: "/check", label: "Scam Check" },
   { href: "/report", label: "Report & Recover" },
   { href: "/learn", label: "Safety Hub" },
+  { href: "/scamwatch", label: "ScamWatch" },
 ];
 
 export function Navbar() {
@@ -23,6 +24,7 @@ export function Navbar() {
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm transition-transform group-hover:scale-105">
               <ShieldCheck className="h-4.5 w-4.5" />
             </span>
+
             <span className="text-base sm:text-lg font-bold tracking-tight hidden sm:inline-block">
               Digital Safety Hub
             </span>
@@ -31,7 +33,9 @@ export function Navbar() {
           <nav className="flex items-center gap-0.5 sm:gap-1.5 text-xs sm:text-sm font-medium text-muted-foreground">
             {navLinks.map((link) => {
               const isActive =
-                pathname === link.href || pathname.startsWith(`${link.href}/`);
+                pathname === link.href ||
+                pathname.startsWith(`${link.href}/`);
+
               return (
                 <Link
                   key={link.href}

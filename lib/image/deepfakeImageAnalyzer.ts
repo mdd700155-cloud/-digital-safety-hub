@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type, Schema } from "@google/genai";
 import {
   DeepfakeImageAnalysisResult,
   DeepfakeImageFeatureScore,
@@ -8,8 +8,57 @@ import {
 } from "@/types/deepfakeImageAnalysis";
 import { deepfakeImageGeminiSchema, DeepfakeImageGeminiDto } from "@/lib/validation/deepfakeImage";
 
+const geminiResponseSchema: Schema = {
+  type: Type.OBJECT,
+  properties: {
+    probability: {
+      type: Type.NUMBER,
+      description: "Overall probability (0-100) that this image is synthetic/AI-generated or deepfake. 0 = definitely real, 100 = definitely synthetic.",
+    },
+    riskLevel: {
+      type: Type.STRING,
+      description: "Must be exactly one of: LIKELY_AUTHENTIC, UNCERTAIN, LIKELY_SYNTHETIC. Use UNCERTAIN when evidence is mixed.",
+    },
+    reasoning: {
+      type: Type.STRING,
+      description: "A 2-3 sentence plain-language explanation of why this image is classified as authentic, uncertain, or synthetic. Be specific about what you observed.",
+    },
+    observations: {
+      type: Type.ARRAY,
+      items: { type: Type.STRING },
+      description: "Specific observations about the image's naturalness. Each observation should be a single factual statement.",
+    },
+    naturalness: {
+      type: Type.OBJECT,
+      properties: {
+        lighting: {
+          type: Type.NUMBER,
+          description: "Consistency of lighting and shadows (0 = inconsistent, 100 = natural)",
+        },
+        texture: {
+          type: Type.NUMBER,
+          description: "Skin texture, pores, and micro-details (0 = too smooth/plastic, 100 = natural)",
+        },
+        eyes: {
+          type: Type.NUMBER,
+          description: "Pupil symmetry and corneal reflections (0 = asymmetrical/mismatched, 100 = natural)",
+        },
+        background: {
+          type: Type.NUMBER,
+          description: "Background blending and structural integrity (0 = warped/hallucinated, 100 = natural)",
+        },
+        edges: {
+          type: Type.NUMBER,
+          description: "Blending of hair, glasses, or accessories (0 = sharp/blurry artifacts, 100 = natural)",
+        },
+      },
+      required: ["lighting", "texture", "eyes", "background", "edges"],
+    },
+  },
+  required: ["probability", "riskLevel", "reasoning", "observations", "naturalness"],
+};
+
 const DEEPFAKE_IMAGE_MODELS = [
-  "gemini-3.6-pro",
   "gemini-3.6-flash",
   "gemini-3.5-flash",
   "gemini-flash-latest",
@@ -85,7 +134,7 @@ async function analyzeWithGemini(
           ],
           config: {
             responseMimeType: "application/json",
-            responseSchema: deepfakeImageGeminiSchema as any,
+            responseSchema: geminiResponseSchema,
             temperature: 0.1,
           },
         });
@@ -108,7 +157,8 @@ async function analyzeWithGemini(
           message.includes("API_KEY_INVALID") ||
           message.includes("API key not valid") ||
           message.includes("API key expired") ||
-          message.includes("INVALID_ARGUMENT");
+          message.includes("UNAUTHENTICATED") ||
+          message.includes("PERMISSION_DENIED");
 
         if (isInvalidKey) {
           console.error("Gemini deepfake analysis failed (invalid API key).");
@@ -122,23 +172,26 @@ async function analyzeWithGemini(
           message.includes("RESOURCE_EXHAUSTED") ||
           message.includes("rate limit");
 
-        if (!isRetryable) {
-          console.error("Gemini deepfake analysis failed:", error);
-          return "service_down";
-        }
-
         const isLastModel = model === DEEPFAKE_IMAGE_MODELS[DEEPFAKE_IMAGE_MODELS.length - 1];
         const isLastAttempt = isLastModel && attempt === RETRY_DELAYS_MS.length - 1;
 
-        if (isLastAttempt) {
+        if (!isRetryable) {
+          if (isLastModel) {
+            console.error("Gemini deepfake analysis failed after all models exhausted:", error);
+          } else {
+            console.warn(
+              `Gemini deepfake model ${model} non-retryable error (${message.slice(0, 60)}) — trying next model`
+            );
+            break;
+          }
+        } else if (isLastAttempt) {
           console.error("Gemini deepfake analysis failed after all retries:", error);
         } else {
           console.warn(
             `Gemini deepfake unavailable (${message.slice(0, 60)}) — retrying (model ${model}, attempt ${attempt + 1})`
           );
+          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt] ?? 3000));
         }
-
-        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt] ?? 3000));
       }
     }
   }

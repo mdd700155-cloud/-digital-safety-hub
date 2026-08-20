@@ -186,7 +186,8 @@ async function analyzeWithGemini(
           message.includes("API_KEY_INVALID") ||
           message.includes("API key not valid") ||
           message.includes("API key expired") ||
-          message.includes("INVALID_ARGUMENT");
+          message.includes("UNAUTHENTICATED") ||
+          message.includes("PERMISSION_DENIED");
 
         if (isInvalidKey) {
           console.error("Gemini deepfake analysis failed (invalid API key).");
@@ -200,23 +201,26 @@ async function analyzeWithGemini(
           message.includes("RESOURCE_EXHAUSTED") ||
           message.includes("rate limit");
 
-        if (!isRetryable) {
-          console.error("Gemini deepfake analysis failed:", error);
-          return "service_down";
-        }
-
         const isLastModel = model === DEEPFAKE_MODELS[DEEPFAKE_MODELS.length - 1];
         const isLastAttempt = isLastModel && attempt === RETRY_DELAYS_MS.length - 1;
 
-        if (isLastAttempt) {
+        if (!isRetryable) {
+          if (isLastModel) {
+            console.error("Gemini deepfake analysis failed after all models exhausted:", error);
+          } else {
+            console.warn(
+              `Gemini deepfake model ${model} non-retryable error (${message.slice(0, 60)}) — trying next model`
+            );
+            break;
+          }
+        } else if (isLastAttempt) {
           console.error("Gemini deepfake analysis failed after all retries:", error);
         } else {
           console.warn(
             `Gemini deepfake unavailable (${message.slice(0, 60)}) — retrying (model ${model}, attempt ${attempt + 1})`
           );
+          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt] ?? 3000));
         }
-
-        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAYS_MS[attempt] ?? 3000));
       }
     }
   }

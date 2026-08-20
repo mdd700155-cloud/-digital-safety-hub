@@ -8,10 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Link as LinkIcon, Image as ImageIcon, QrCode, AudioWaveform, ScanFace, Loader2, UploadCloud, X, ShieldCheck } from "lucide-react";
+import { MessageSquare, Link as LinkIcon, Image as ImageIcon, QrCode, AudioWaveform, ScanFace, UploadCloud, X, ShieldCheck } from "lucide-react";
 import { AnalysisResult } from "@/types/analysis";
 import { ResultDisplay } from "./ResultDisplay";
 import { QrScanner } from "./QrScanner";
+import { AnalysisLoader } from "./AnalysisLoader";
 import { UnifiedAudioAnalyzer } from "../voice-analysis/UnifiedAudioAnalyzer";
 import { DeepfakeImageDetector } from "@/features/deepfake-detection/DeepfakeImageDetector";
 
@@ -175,23 +176,7 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
   }
 
   if (isAnalyzing) {
-    return (
-      <Card className="border shadow-soft min-h-[400px] flex items-center justify-center overflow-hidden">
-        <div className="flex flex-col items-center space-y-5 text-center p-6">
-          <div className="relative">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 ring-1 ring-primary/10">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold">Analyzing your submission...</h3>
-            <p className="text-sm text-muted-foreground mt-2 max-w-sm leading-relaxed">
-              Checking against known threat patterns, structural heuristics, and context. This usually takes a few seconds.
-            </p>
-          </div>
-        </div>
-      </Card>
-    );
+    return <AnalysisLoader key={activeTab} contentType={activeTab} compact={compact} />;
   }
 
   return (

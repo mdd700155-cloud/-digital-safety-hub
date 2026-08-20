@@ -17,11 +17,11 @@ export function Navbar() {
   const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-card/70 backdrop-blur-xl supports-[backdrop-filter]:bg-card/55">
       <PageContainer>
         <div className="flex min-h-16 items-center justify-between gap-3 py-3">
           <Link href="/" className="flex items-center gap-2.5 group shrink-0">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm transition-transform group-hover:scale-105">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-soft transition-transform duration-200 group-hover:scale-105">
               <ShieldCheck className="h-4 w-4" />
             </span>
 

@@ -16,12 +16,12 @@ const resourceLinks = [
 
 export function Footer() {
   return (
-    <footer className="w-full border-t border-border/40 bg-muted/20">
+    <footer className="relative z-0 w-full border-t border-border/40 bg-card/55 backdrop-blur-md">
       <PageContainer>
         <div className="grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-3">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-soft">
                 <ShieldCheck className="h-4 w-4" />
               </span>
               <span className="text-base font-bold tracking-tight">Digital Safety Hub</span>

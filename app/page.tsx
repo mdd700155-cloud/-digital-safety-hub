@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ShieldCheck, Search, Shield, RefreshCw, ArrowRight, MessageSquareWarning, Lock, Smartphone, Zap, BookOpen, FileCheck2, BookMarked, AlertTriangle, Users } from "lucide-react";
+import { ShieldCheck, Search, Shield, RefreshCw, ArrowRight, MessageSquareWarning, Lock, Smartphone, Zap, BookOpen, FileCheck2, BookMarked, Users } from "lucide-react";
 import { ScamChecker } from "@/features/scam-check/ScamChecker";
 import { CommunityReportsPreview } from "@/components/community-reports-preview";
 import { supabase } from "@/lib/supabase";
@@ -62,24 +62,25 @@ export default function Home() {
   const stats = [
     { value: "6", label: "Content types", icon: FileCheck2, color: "text-primary" },
     { value: "20+", label: "Recovery guides", icon: BookMarked, color: "text-emerald-600" },
-    { value: "12", label: "Safety guides", icon: BookOpen, color: "text-indigo-600" },
+    { value: "12", label: "Safety guides", icon: BookOpen, color: "text-sky-700" },
     { value: String(communityCount), label: "Community reports", icon: Users, color: "text-amber-600" },
   ];
 
   return (
     <div className="flex flex-col w-full">
       {/* Hero Section — split layout */}
-      <section className="relative overflow-hidden border-b border-border/40 bg-gradient-to-b from-muted/60 via-muted/30 to-background py-16 md:py-24">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--primary)_0%,transparent_60%)] opacity-[0.04]" />
+      <section className="relative overflow-hidden border-b border-border/30 py-16 md:py-24">
         <PageContainer className="relative">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <div className="text-center lg:text-left">
-              <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6 shadow-sm">
+              <div className="inline-flex items-center rounded-lg border border-primary/20 bg-card/70 px-4 py-1.5 text-sm font-medium text-primary mb-6 shadow-soft backdrop-blur-sm">
                 <ShieldCheck className="mr-2 h-4 w-4" /> Your Digital Safety Companion
               </div>
               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-6 leading-[1.1]">
                 Not sure if it&apos;s a scam?{" "}
-                <span className="text-foreground">Check it before you act.</span>
+                <span className="bg-gradient-to-r from-primary to-[oklch(0.48_0.1_185)] bg-clip-text text-transparent">
+                  Check it before you act.
+                </span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-8">
                 Instantly check suspicious messages, links, screenshots, QR codes, audio, and face images. Understand potential risks and receive actionable guidance.
@@ -110,8 +111,8 @@ export default function Home() {
             </div>
 
             <div id="scam-check" className="scroll-mt-24">
-              <div className="rounded-2xl bg-muted/50 p-1 ring-1 ring-border/60">
-                <div className="rounded-[15px] bg-background">
+              <div className="rounded-2xl bg-primary/5 p-1 ring-1 ring-primary/15 shadow-lift">
+                <div className="rounded-[15px] bg-card/90 backdrop-blur-sm">
                   <ScamChecker compact />
                 </div>
               </div>
@@ -121,7 +122,7 @@ export default function Home() {
       </section>
 
       {/* Stats strip — single line on all screens */}
-      <section className="border-b border-border/40 bg-background">
+      <section className="border-b border-border/30 bg-card/45 backdrop-blur-sm">
         <PageContainer>
           <div className="grid grid-cols-4">
             {stats.map((stat, i) => {
@@ -132,10 +133,10 @@ export default function Home() {
                   key={stat.label}
                   className={cn(
                     "flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-2.5 px-2 sm:px-4 py-5 sm:py-7 text-center",
-                    !isLast && "border-r border-border/60"
+                    !isLast && "border-r border-border/50"
                   )}
                 >
-                  <div className={cn("flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full bg-muted/70 ring-1 ring-border/40", stat.color)}>
+                  <div className={cn("flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-lg bg-card/80 ring-1 ring-border/50 shadow-soft", stat.color)}>
                     <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </div>
                   <div className="min-w-0">
@@ -176,12 +177,12 @@ export default function Home() {
             {steps.slice(0, 3).map((step, i) => (
               <div
                 key={step.title}
-                className="relative flex flex-col rounded-xl border border-border/60 bg-card p-7 shadow-soft transition-all hover:shadow-lift hover:border-primary/40"
+                className="relative flex flex-col rounded-xl border border-border/50 bg-card/80 p-7 shadow-soft backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lift hover:border-primary/35"
               >
-                <span className="absolute top-5 right-5 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-sm">
+                <span className="absolute top-5 right-5 flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground shadow-soft">
                   {i + 1}
                 </span>
-                <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-5 ring-1 ring-primary/10">
+                <div className="h-12 w-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-5 ring-1 ring-primary/10">
                   <step.icon className="h-6 w-6" />
                 </div>
                 <h4 className="text-lg font-semibold mb-2">{step.title}</h4>
@@ -189,12 +190,12 @@ export default function Home() {
               </div>
             ))}
 
-            <div className="relative flex flex-col rounded-xl border border-border/60 bg-card p-7 shadow-soft transition-all hover:shadow-lift hover:border-primary/40 md:col-span-2 lg:col-span-2">
-              <span className="absolute top-5 right-5 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-sm">
+            <div className="relative flex flex-col rounded-xl border border-border/50 bg-card/80 p-7 shadow-soft backdrop-blur-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lift hover:border-primary/35 md:col-span-2 lg:col-span-2">
+              <span className="absolute top-5 right-5 flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground shadow-soft">
                 4
               </span>
               <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-                <div className="h-12 w-12 shrink-0 rounded-full bg-primary/10 text-primary flex items-center justify-center ring-1 ring-primary/10">
+                <div className="h-12 w-12 shrink-0 rounded-lg bg-primary/10 text-primary flex items-center justify-center ring-1 ring-primary/10">
                   <RefreshCw className="h-6 w-6" />
                 </div>
                 <div>
@@ -206,10 +207,10 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="relative flex flex-col items-start justify-between gap-6 overflow-hidden rounded-xl border border-primary/20 bg-muted/50 p-7 shadow-soft">
-              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--primary)_0%,transparent_60%)] opacity-[0.04]" />
+            <div className="relative flex flex-col items-start justify-between gap-6 overflow-hidden rounded-xl border border-primary/25 bg-primary/8 p-7 shadow-soft backdrop-blur-sm">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,oklch(0.55_0.1_200)_0%,transparent_60%)] opacity-[0.12]" />
               <div className="relative">
-                <div className="h-12 w-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center mb-5 shadow-sm">
+                <div className="h-12 w-12 rounded-lg bg-primary text-primary-foreground flex items-center justify-center mb-5 shadow-soft">
                   <BookOpen className="h-6 w-6" />
                 </div>
                 <h4 className="text-lg font-semibold mb-2">Learn the patterns</h4>
@@ -237,11 +238,11 @@ export default function Home() {
       </section>
 
       {/* Educational Preview */}
-      <section className="py-20 border-t border-border/40 bg-muted/20">
+      <section className="py-20 border-t border-border/30 bg-card/40 backdrop-blur-sm">
         <PageContainer>
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <div>
-              <span className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 text-primary mb-6 ring-1 ring-primary/10">
+              <span className="inline-flex items-center justify-center h-12 w-12 rounded-lg bg-primary/10 text-primary mb-6 ring-1 ring-primary/10 shadow-soft">
                 <MessageSquareWarning className="h-6 w-6" />
               </span>
               <h2 className="text-3xl font-bold tracking-tight mb-4">Empower Yourself</h2>

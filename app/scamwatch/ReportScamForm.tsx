@@ -9,6 +9,8 @@ import {
   CheckCircle,
   AlertCircle,
   Loader2,
+  ImagePlus,
+  X,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/card";
@@ -19,6 +21,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 
 const STORAGE_KEY = "scamwatch_report_persisted_state_v1";
+const EVIDENCE_BUCKET = "scam-evidence";
+const MAX_IMAGES = 4;
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
+type EvidenceImage = {
+  file: File;
+  previewUrl: string;
+};
 
 type PersistedReportState = {
   scamType: string;
@@ -93,6 +103,16 @@ export default function ReportScamForm({
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
+  const [evidenceImages, setEvidenceImages] = useState<EvidenceImage[]>([]);
+  const [imageError, setImageError] = useState("");
+
+  useEffect(() => {
+    return () => {
+      evidenceImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const toSave: PersistedReportState = { scamType, riskLevel, message, url, description };
     try {
@@ -110,12 +130,108 @@ export default function ReportScamForm({
       searchParams.get("description")
   );
 
+  function handleAddImages(fileList: FileList | null) {
+    if (!fileList || fileList.length === 0) return;
+
+    setImageError("");
+
+    const files = Array.from(fileList);
+    const remainingSlots = MAX_IMAGES - evidenceImages.length;
+
+    if (remainingSlots <= 0) {
+      setImageError(`You can attach up to ${MAX_IMAGES} images.`);
+      return;
+    }
+
+    const selected = files.slice(0, remainingSlots);
+
+    for (const file of selected) {
+      if (!file.type.startsWith("image/")) {
+        setImageError("Only image files (JPG, PNG, WebP, etc.) are allowed.");
+        return;
+      }
+
+      if (file.size > MAX_IMAGE_SIZE) {
+        setImageError("Each image must be 5 MB or smaller.");
+        return;
+      }
+    }
+
+    setEvidenceImages((current) => [
+      ...current,
+      ...selected.map((file) => ({
+        file,
+        previewUrl: URL.createObjectURL(file),
+      })),
+    ]);
+  }
+
+  function removeImage(index: number) {
+    setEvidenceImages((current) => {
+      const target = current[index];
+
+      if (target) {
+        URL.revokeObjectURL(target.previewUrl);
+      }
+
+      return current.filter((_, i) => i !== index);
+    });
+
+    setImageError("");
+  }
+
+  async function uploadEvidenceImages(): Promise<string[]> {
+    const urls: string[] = [];
+
+    for (const image of evidenceImages) {
+      const extension = image.file.name.split(".").pop() ?? "jpg";
+      const path = `reports/${Date.now()}-${crypto.randomUUID()}.${extension}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from(EVIDENCE_BUCKET)
+        .upload(path, image.file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (uploadError) {
+        throw new Error(
+          "One or more images failed to upload. Please try again."
+        );
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from(EVIDENCE_BUCKET)
+        .getPublicUrl(path);
+
+      urls.push(publicUrlData.publicUrl);
+    }
+
+    return urls;
+  }
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 
     setSubmitting(true);
     setSuccess(false);
     setError("");
+
+    let imageUrls: string[] = [];
+
+    try {
+      if (evidenceImages.length > 0) {
+        imageUrls = await uploadEvidenceImages();
+      }
+    } catch (uploadError) {
+      setSubmitting(false);
+      setError(
+        uploadError instanceof Error
+          ? uploadError.message
+          : "Image upload failed. Please try again."
+      );
+      return;
+    }
 
     const { error } = await supabase
       .from("scam_reports")
@@ -126,6 +242,7 @@ export default function ReportScamForm({
         url: url || null,
         description: description || null,
         indicators: [],
+        image_urls: imageUrls.length > 0 ? imageUrls : null,
       });
 
     setSubmitting(false);
@@ -145,6 +262,10 @@ export default function ReportScamForm({
     setMessage("");
     setUrl("");
     setDescription("");
+
+    evidenceImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
+    setEvidenceImages([]);
+    setImageError("");
 
     try {
       localStorage.removeItem(STORAGE_KEY);
@@ -261,6 +382,71 @@ export default function ReportScamForm({
             placeholder="Briefly describe what happened..."
             rows={4}
           />
+        </div>
+
+        {/* Evidence Images */}
+        <div className="space-y-2">
+          <Label htmlFor="evidence-images">Evidence images</Label>
+
+          <div className="flex flex-wrap items-center gap-3">
+            {evidenceImages.map((image, index) => (
+              <div
+                key={image.previewUrl}
+                className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-border bg-muted"
+              >
+                <img
+                  src={image.previewUrl}
+                  alt={`Evidence image ${index + 1}`}
+                  className="h-full w-full object-cover"
+                />
+
+                <button
+                  type="button"
+                  aria-label={`Remove image ${index + 1}`}
+                  onClick={() => removeImage(index)}
+                  className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-background/85 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-destructive hover:text-destructive-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ))}
+
+            {evidenceImages.length < MAX_IMAGES && (
+              <label
+                htmlFor="evidence-images"
+                className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-muted-foreground/30 px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+              >
+                <ImagePlus className="h-4 w-4" />
+                Upload image
+              </label>
+            )}
+          </div>
+
+          <input
+            id="evidence-images"
+            type="file"
+            accept="image/*"
+            multiple
+            className="sr-only"
+            onChange={(e) => {
+              handleAddImages(e.target.files);
+              e.target.value = "";
+            }}
+          />
+
+          <p className="text-xs text-muted-foreground">
+            Screenshots of the scam help others recognize it. Up to{" "}
+            {MAX_IMAGES} images, 5 MB each.
+          </p>
+
+          {imageError && (
+            <p
+              role="alert"
+              className="text-xs font-medium text-destructive"
+            >
+              {imageError}
+            </p>
+          )}
         </div>
 
         {/* Submit */}

@@ -1,14 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { recoveryChecklists } from "@/lib/mock/recoveryData";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ClipboardCopy, CheckCircle2, ShieldAlert, Check, FileText, Phone, ExternalLink, ChevronRight } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { CheckCircle2, ShieldAlert, Check, FileText, Phone, ExternalLink, ChevronRight, ImagePlus, X, Paperclip, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const EVIDENCE_BUCKET = "scam-evidence";
+const MAX_ATTACHMENTS = 5;
+const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
 
 interface IncidentData {
   category: string;
@@ -18,10 +23,22 @@ interface IncidentData {
   description: string;
 }
 
+interface AttachmentInfo {
+  name: string;
+  url: string;
+  type: string;
+}
+
 interface IncidentSummary extends IncidentData {
   steps: string[];
   generatedAt: string;
+  attachments: AttachmentInfo[];
 }
+
+type LocalAttachment = {
+  file: File;
+  previewUrl: string;
+};
 
 const steps = [
   { label: "Select Type" },
@@ -39,8 +56,20 @@ export function RecoveryWizard() {
     platform: "",
     description: "",
   });
-  const [copied, setCopied] = useState(false);
   const [incidentSummary, setIncidentSummary] = useState<IncidentSummary | null>(null);
+
+  const [attachments, setAttachments] = useState<LocalAttachment[]>([]);
+  const [attachmentError, setAttachmentError] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      attachments.forEach((attachment) =>
+        URL.revokeObjectURL(attachment.previewUrl)
+      );
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const activeChecklist = recoveryChecklists.find(c => c.id === selectedCategory);
 
@@ -50,8 +79,117 @@ export function RecoveryWizard() {
     setStep(2);
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
+  const handleAddAttachments = (fileList: FileList | null) => {
+    if (!fileList || fileList.length === 0) return;
+
+    setAttachmentError("");
+
+    const files = Array.from(fileList);
+    const remainingSlots = MAX_ATTACHMENTS - attachments.length;
+
+    if (remainingSlots <= 0) {
+      setAttachmentError(`You can attach up to ${MAX_ATTACHMENTS} images.`);
+      return;
+    }
+
+    const selected = files.slice(0, remainingSlots);
+
+    for (const file of selected) {
+      const isAllowedType = file.type.startsWith("image/");
+
+      if (!isAllowedType) {
+        setAttachmentError("Only image files are allowed.");
+        return;
+      }
+
+      if (file.size > MAX_ATTACHMENT_SIZE) {
+        setAttachmentError("Each file must be 10 MB or smaller.");
+        return;
+      }
+    }
+
+    setAttachments((current) => [
+      ...current,
+      ...selected.map((file) => ({
+        file,
+        previewUrl: URL.createObjectURL(file),
+      })),
+    ]);
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments((current) => {
+      const target = current[index];
+
+      if (target) {
+        URL.revokeObjectURL(target.previewUrl);
+      }
+
+      return current.filter((_, i) => i !== index);
+    });
+
+    setAttachmentError("");
+  };
+
+  const uploadAttachments = async (): Promise<AttachmentInfo[]> => {
+    const uploaded: AttachmentInfo[] = [];
+
+    for (const attachment of attachments) {
+      const extension = attachment.file.name.split(".").pop() ?? "file";
+      const path = `incidents/${crypto.randomUUID()}.${extension}`;
+
+      const { error } = await supabase.storage
+        .from(EVIDENCE_BUCKET)
+        .upload(path, attachment.file, {
+          cacheControl: "3600",
+          upsert: false,
+        });
+
+      if (error) {
+        throw new Error(
+          "One or more evidence files failed to upload. Please try again."
+        );
+      }
+
+      const { data: publicUrlData } = supabase.storage
+        .from(EVIDENCE_BUCKET)
+        .getPublicUrl(path);
+
+      uploaded.push({
+        name: attachment.file.name,
+        url: publicUrlData.publicUrl,
+        type: attachment.file.type,
+      });
+    }
+
+    return uploaded;
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    setAttachmentError("");
+
+    let uploadedAttachments: AttachmentInfo[] = [];
+
+    if (attachments.length > 0) {
+      setIsUploading(true);
+
+      try {
+        uploadedAttachments = await uploadAttachments();
+      } catch (uploadError) {
+        setIsUploading(false);
+        setAttachmentError(
+          uploadError instanceof Error
+            ? uploadError.message
+            : "Evidence upload failed. Please try again."
+        );
+        return;
+      }
+
+      setIsUploading(false);
+    }
+
     const summary = {
       category: formData.category,
       date: formData.date,
@@ -60,6 +198,7 @@ export function RecoveryWizard() {
       description: formData.description,
       steps: activeChecklist?.steps || [],
       generatedAt: new Date().toISOString(),
+      attachments: uploadedAttachments,
     };
     setIncidentSummary(summary);
     setStep(3);
@@ -67,38 +206,43 @@ export function RecoveryWizard() {
 
   const generateReportText = (source: IncidentSummary | null = incidentSummary) => {
     if (!source) return '';
-    return `INCIDENT REPORT SUMMARY (Locally Generated)\nDate of Generation: ${new Date(source.generatedAt).toLocaleString()}\n\nCATEGORY: ${source.category}\nINCIDENT DATE: ${source.date || "Not provided"}\nPLATFORM/WEBSITE: ${source.platform || "Not provided"}\nFINANCIAL LOSS: ${source.amount || "None/Not provided"}\n\nDESCRIPTION:\n${source.description || "No description provided."}\n\nRECOMMENDED ACTION STEPS (From Digital Safety Hub):\n${(source.steps || []).map((s, i) => `${i + 1}. ${s}`).join("\n") || "No steps available."}\n\n--\nNote: This report is generated locally on your device to help you organize your thoughts before speaking to authorities or your bank. It has NOT been submitted to any agency.`;
+    const attachmentLines = source.attachments.length > 0
+      ? `\n\nATTACHED EVIDENCE:\n${source.attachments.map((a) => `- ${a.name}`).join("\n")}`
+      : '';
+    return `INCIDENT REPORT SUMMARY (Locally Generated)\nDate of Generation: ${new Date(source.generatedAt).toLocaleString()}\n\nCATEGORY: ${source.category}\nINCIDENT DATE: ${source.date || "Not provided"}\nPLATFORM/WEBSITE: ${source.platform || "Not provided"}\nFINANCIAL LOSS: ${source.amount || "None/Not provided"}\n\nDESCRIPTION:\n${source.description || "No description provided."}\n\nRECOMMENDED ACTION STEPS (From Digital Safety Hub):\n${(source.steps || []).map((s, i) => `${i + 1}. ${s}`).join("\n") || "No steps available."}${attachmentLines}\n\n--\nNote: This report is generated locally on your device to help you organize your thoughts before speaking to authorities or your bank. It has NOT been submitted to any agency.`;
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(generateReportText());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const handleDownloadAttachment = (index: number) => {
+    const attachment = attachments[index];
+    if (!attachment) return;
 
-  const handleDownloadTxt = () => {
-    if (!incidentSummary) return;
-    const text = generateReportText();
-    import('@/lib/helpers/evidenceExport').then(({ downloadTextFile }) => {
-      downloadTextFile(`incident-summary-${new Date().toISOString()}.txt`, text);
+    import('@/lib/helpers/evidenceExport').then(({ downloadBlob }) => {
+      downloadBlob(attachment.file.name, attachment.file);
     });
   };
 
-  const handleDownloadJson = () => {
+  const handleDownloadPdf = async () => {
     if (!incidentSummary) return;
-    import('@/lib/helpers/evidenceExport').then(({ downloadJsonFile }) => {
-      downloadJsonFile(`incident-summary-${new Date().toISOString()}.json`, incidentSummary);
-    });
+
+    const { buildSummaryPdf } = await import("@/lib/helpers/evidenceExport");
+    await buildSummaryPdf(
+      generateReportText(),
+      incidentSummary.attachments.map((attachment) => attachment.url),
+      `incident-summary-${new Date().toISOString()}.pdf`
+    );
   };
 
-  const handleDownloadPng = async () => {
+  const handleDownloadImage = async () => {
     if (!incidentSummary) return;
-    const text = generateReportText();
-    const { renderSummaryAsPng, downloadBlob } = await import('@/lib/helpers/evidenceExport');
-    const dataUrl = await renderSummaryAsPng(text, { width: 900 });
-    const res = await fetch(dataUrl);
-    const blob = await res.blob();
-    downloadBlob(`incident-summary-${new Date().toISOString()}.png`, blob);
+
+    const { downloadBlob, renderSummaryWithImagesAsPng } = await import(
+      "@/lib/helpers/evidenceExport"
+    );
+    const image = await renderSummaryWithImagesAsPng(
+      generateReportText(),
+      incidentSummary.attachments.map((attachment) => attachment.url)
+    );
+    downloadBlob(`incident-summary-${new Date().toISOString()}.png`, image);
   };
 
   return (
@@ -231,13 +375,84 @@ export function RecoveryWizard() {
                     onChange={e => setFormData({...formData, description: e.target.value})}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="evidence-attachments" className="flex items-center gap-1.5">
+                    <Paperclip className="h-3.5 w-3.5" />
+                    Evidence attachments (images)
+                  </Label>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    {attachments.map((attachment, index) => (
+                      <div
+                        key={attachment.previewUrl}
+                        className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted"
+                      >
+                        <img
+                          src={attachment.previewUrl}
+                          alt={attachment.file.name}
+                          className="h-full w-full object-cover"
+                        />
+
+                        <button
+                          type="button"
+                          aria-label={`Remove ${attachment.file.name}`}
+                          onClick={() => removeAttachment(index)}
+                          className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-background/85 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-destructive hover:text-destructive-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+
+                    {attachments.length < MAX_ATTACHMENTS && (
+                      <label
+                        htmlFor="evidence-attachments"
+                        className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-muted-foreground/30 px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+                      >
+                        <ImagePlus className="h-4 w-4" />
+                        Upload evidence
+                      </label>
+                    )}
+                  </div>
+
+                  <input
+                    id="evidence-attachments"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="sr-only"
+                    onChange={(e) => {
+                      handleAddAttachments(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+
+                  <p className="text-xs text-muted-foreground">
+                    Upload screenshots as evidence. Up to {MAX_ATTACHMENTS} images, 10 MB each.
+                  </p>
+
+                  {attachmentError && (
+                    <p role="alert" className="text-xs font-medium text-destructive">
+                      {attachmentError}
+                    </p>
+                  )}
+                </div>
                 <div className="p-3.5 bg-warning/5 rounded-lg text-xs text-warning-foreground border border-warning/20">
-                  <strong>Privacy Note:</strong> This information never leaves your device. It is used solely to generate a text summary for you to copy.
+                  <strong>Privacy Note:</strong> Your text details stay on your device. Evidence images are uploaded to cloud storage so you can access them later.
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between border-t pt-6 bg-muted/10">
                 <Button type="button" variant="ghost" onClick={() => setStep(1)}>Back</Button>
-                <Button type="submit">Generate Summary</Button>
+                <Button type="submit" disabled={isUploading}>
+                  {isUploading ? (
+                    <>
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      Uploading evidence...
+                    </>
+                  ) : (
+                    "Generate Summary"
+                  )}
+                </Button>
               </CardFooter>
             </form>
           </Card>
@@ -262,17 +477,47 @@ export function RecoveryWizard() {
               </div>
               <div className="text-sm text-muted-foreground">Generated: {incidentSummary ? new Date(incidentSummary.generatedAt).toLocaleString() : ''}</div>
             </div>
+
+            {incidentSummary && incidentSummary.attachments.length > 0 && (
+              <div className="mt-6 rounded-xl border p-4">
+                <p className="mb-3 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                  Evidence attachments ({incidentSummary.attachments.length})
+                </p>
+
+                <div className="flex flex-wrap gap-3">
+                  {incidentSummary.attachments.map((attachment, index) => (
+                    <div key={attachment.url} className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border bg-muted">
+                      <img
+                        src={attachment.url}
+                        alt={attachment.name}
+                        className="h-full w-full object-cover"
+                      />
+
+                      <button
+                        type="button"
+                        aria-label={`Download ${attachment.name}`}
+                        onClick={() => handleDownloadAttachment(index)}
+                        className="absolute bottom-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-background/85 text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
           <CardFooter className="flex flex-col sm:flex-row justify-between gap-4 border-t pt-6 bg-muted/10">
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={() => setStep(2)}>Edit Details</Button>
-              <Button onClick={handleCopy}>
-                <ClipboardCopy className="mr-2 h-4 w-4" />
-                {copied ? "Copied!" : "Copy Summary"}
+              <Button variant="outline" onClick={handleDownloadPdf}>
+                <Download className="mr-2 h-4 w-4" />
+                Download PDF
               </Button>
-              <Button onClick={handleDownloadTxt} variant="ghost">Download TXT</Button>
-              <Button onClick={handleDownloadPng} variant="ghost">Download PNG</Button>
-              <Button onClick={handleDownloadJson} variant="ghost">Download JSON</Button>
+              <Button variant="outline" onClick={handleDownloadImage}>
+                <Download className="mr-2 h-4 w-4" />
+                Download Image
+              </Button>
             </div>
 
             <div className="flex gap-2">

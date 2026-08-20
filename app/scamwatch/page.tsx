@@ -15,16 +15,18 @@ import {
   ShieldCheck,
   AlertTriangle,
   Loader2,
+  Heart,
 } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import ReportScamForm from "./ReportScamForm";
+import { ImageCarousel } from "./ImageCarousel";
 
 type ScamReport = {
   id: string;
@@ -35,6 +37,7 @@ type ScamReport = {
   description: string | null;
   seen_count: number | null;
   created_at: string | null;
+  image_urls: string[] | null;
 };
 
 function getRiskLabel(risk: string) {
@@ -76,13 +79,14 @@ export default function ScamWatchPage() {
       return [];
     }
   });
+  const [updatingIds, setUpdatingIds] = useState<string[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   async function loadReports() {
     const { data, error } = await supabase
       .from("scam_reports")
       .select(
-        "id, scam_type, risk_level, message, url, description, seen_count, created_at"
+        "id, scam_type, risk_level, message, url, description, seen_count, created_at, image_urls"
       )
       .order("created_at", { ascending: false });
 
@@ -101,7 +105,7 @@ export default function ScamWatchPage() {
     supabase
       .from("scam_reports")
       .select(
-        "id, scam_type, risk_level, message, url, description, seen_count, created_at"
+        "id, scam_type, risk_level, message, url, description, seen_count, created_at, image_urls"
       )
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {
@@ -123,8 +127,11 @@ export default function ScamWatchPage() {
 
   async function confirmSeen(report: ScamReport) {
     if (seenReports.includes(report.id)) return;
+    if (updatingIds.includes(report.id)) return;
 
     const currentCount = report.seen_count ?? 0;
+
+    setUpdatingIds((current) => [...current, report.id]);
 
     const { error } = await supabase
       .from("scam_reports")
@@ -132,6 +139,10 @@ export default function ScamWatchPage() {
         seen_count: currentCount + 1,
       })
       .eq("id", report.id);
+
+    setUpdatingIds((current) =>
+      current.filter((id) => id !== report.id)
+    );
 
     if (error) {
       console.error("Failed to update seen count:", error);
@@ -232,55 +243,94 @@ export default function ScamWatchPage() {
         </Suspense>
       </section>
 
-      {/* COMMUNITY STATS — small info note */}
+      {/* COMMUNITY STATS */}
       <section className="mb-8 md:mb-12">
-        <Card className="p-3 md:p-4 border-dashed border-muted-foreground/30 bg-muted/20 shadow-none">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-primary shrink-0" />
-              <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
-                <span className="font-bold text-foreground mr-1">{reports.length}</span>
-                Reports
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="p-4 md:p-5 shadow-soft">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/15">
+                <Users className="h-5 w-5" />
               </span>
+              <div>
+                <p className="text-2xl font-bold tabular-nums leading-tight">
+                  {reports.length}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Reports
+                </p>
+              </div>
             </div>
-            <span className="hidden sm:block h-4 w-px bg-border/60" />
-            <div className="flex items-center gap-2">
-              <ShieldAlert className="h-4 w-4 text-destructive shrink-0" />
-              <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
-                <span className="font-bold text-foreground mr-1">{highRiskCount}</span>
-                High Risk
+          </Card>
+
+          <Card className="p-4 md:p-5 shadow-soft">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/10 text-destructive ring-1 ring-destructive/15">
+                <ShieldAlert className="h-5 w-5" />
               </span>
+              <div>
+                <p className="text-2xl font-bold tabular-nums leading-tight">
+                  {highRiskCount}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  High Risk
+                </p>
+              </div>
             </div>
-            <span className="hidden sm:block h-4 w-px bg-border/60" />
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-warning shrink-0" />
-              <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
-                <span className="font-bold text-foreground mr-1">{suspiciousCount}</span>
-                Suspicious
+          </Card>
+
+          <Card className="p-4 md:p-5 shadow-soft">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-warning/10 text-warning ring-1 ring-warning/15">
+                <Clock className="h-5 w-5" />
               </span>
+              <div>
+                <p className="text-2xl font-bold tabular-nums leading-tight">
+                  {suspiciousCount}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Suspicious
+                </p>
+              </div>
             </div>
-            <span className="hidden sm:block h-4 w-px bg-border/60" />
-            <div className="flex items-center gap-2">
-              <Flame className="h-4 w-4 text-warning shrink-0" />
-              <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
-                <span className="font-bold text-foreground mr-1">{trendingCount}</span>
-                Trending
+          </Card>
+
+          <Card className="p-4 md:p-5 shadow-soft">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-warning/10 text-warning ring-1 ring-warning/15">
+                <Flame className="h-5 w-5" />
               </span>
+              <div>
+                <p className="text-2xl font-bold tabular-nums leading-tight">
+                  {trendingCount}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Trending
+                </p>
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        </div>
       </section>
 
       {/* COMMUNITY REPORTS */}
       <section>
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold">
-            Community Reports
-          </h2>
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-2xl font-bold">
+              Community Reports
+            </h2>
 
-          <p className="mt-1 text-sm text-muted-foreground">
-            Search and explore scam warnings shared by other users.
-          </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Search and explore scam warnings shared by other users.
+            </p>
+          </div>
+
+          <Badge variant="outline" className="shrink-0">
+            {filteredReports.length}
+            {" "}of{" "}
+            {reports.length}
+            {" "}shown
+          </Badge>
         </div>
 
         {/* SEARCH + FILTER */}
@@ -367,10 +417,13 @@ export default function ScamWatchPage() {
 
         {/* REPORT CARDS */}
         {!loading && filteredReports.length > 0 && (
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="columns-1 gap-6 sm:columns-2 lg:columns-3">
             {filteredReports.map((report) => {
               const alreadySeen =
                 seenReports.includes(report.id);
+
+              const isUpdating =
+                updatingIds.includes(report.id);
 
               const seenCount =
                 report.seen_count ?? 0;
@@ -378,43 +431,111 @@ export default function ScamWatchPage() {
               const isTrending =
                 seenCount >= 3;
 
+              const images = report.image_urls ?? [];
+
               return (
                 <Card
                   key={report.id}
-                  className="transition-all hover:-translate-y-0.5 hover:shadow-lift"
+                  className="mb-6 flex w-full break-inside-avoid flex-col overflow-hidden transition-all hover:-translate-y-0.5 hover:shadow-lift"
                 >
-                  <CardHeader className="flex-row items-center justify-between gap-3 border-b">
-                    <Badge
-                      className={getRiskBadgeClass(
-                        report.risk_level
-                      )}
-                    >
-                      {getRiskLabel(
-                        report.risk_level
-                      )}
-                    </Badge>
+                  {/* POST HEADER */}
+                  <div className="flex items-center gap-3 border-b p-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary ring-1 ring-primary/20">
+                      <ShieldCheck className="h-4 w-4" />
+                    </span>
 
-                    {isTrending && (
-                      <Badge variant="outline" className="gap-1">
-                        <Flame className="h-3 w-3 text-warning" />
-                        Trending
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold">
+                        ScamWatch Community
+                      </p>
+                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3 shrink-0" />
+                        Reported{" "}
+                        {formatDate(report.created_at)}
+                      </p>
+                    </div>
+
+                    <div className="flex shrink-0 flex-col items-end gap-1.5">
+                      <Badge
+                        className={getRiskBadgeClass(
+                          report.risk_level
+                        )}
+                      >
+                        {getRiskLabel(report.risk_level)}
                       </Badge>
-                    )}
-                  </CardHeader>
 
-                  <CardContent className="space-y-4">
+                      {isTrending && (
+                        <Badge variant="outline" className="gap-1">
+                          <Flame className="h-3 w-3 text-warning" />
+                          Trending
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* POST IMAGE / CAROUSEL */}
+                  {images.length > 0 && (
+                    <ImageCarousel
+                      images={images}
+                      alt={report.scam_type}
+                      className="h-64 w-full sm:h-72"
+                    />
+                  )}
+
+                  {/* POST ACTION ROW */}
+                  <div className="flex items-center gap-2 border-b p-3">
+                    {isTrending && (
+                      <span className="flex items-center gap-1 text-sm font-medium text-warning">
+                        <Flame className="h-4 w-4" />
+                        Trending
+                      </span>
+                    )}
+
+                    <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Users className="h-4 w-4" />
+                      Seen by {seenCount}{" "}
+                      {seenCount === 1
+                        ? "person"
+                        : "people"}
+                    </span>
+
+                    <Button
+                      type="button"
+                      variant={alreadySeen ? "secondary" : "default"}
+                      size="sm"
+                      className="ml-auto"
+                      onClick={() => confirmSeen(report)}
+                      disabled={alreadySeen || isUpdating}
+                    >
+                      {alreadySeen ? (
+                        <>
+                          <Check className="h-4 w-4" />
+                          You&apos;ve Seen This
+                        </>
+                      ) : isUpdating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Counting...
+                        </>
+                      ) : (
+                        <>
+                          <Heart className="h-4 w-4" />
+                          I&apos;ve Seen This Too
+                        </>
+                      )}
+                    </Button>
+                  </div>
+
+                  {/* POST CAPTION BODY */}
+                  <div className="space-y-4 p-4">
                     {/* TITLE */}
                     <div>
                       <h3 className="text-xl font-bold">
                         {report.scam_type}
                       </h3>
 
-                      <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        Reported{" "}
-                        {formatDate(
-                          report.created_at
-                        )}
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Community scam warning
                       </p>
                     </div>
 
@@ -530,49 +651,6 @@ export default function ScamWatchPage() {
                       </div>
                     )}
 
-                    {/* COMMUNITY SIGNAL */}
-                    <div className="rounded-xl border p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="flex items-center gap-2 text-sm font-semibold">
-                            <Users className="h-4 w-4" />
-                            Community signal
-                          </p>
-
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            Seen by{" "}
-                            <strong className="text-foreground">
-                              {seenCount}
-                            </strong>{" "}
-                            {seenCount === 1
-                              ? "person"
-                              : "people"}
-                          </p>
-                        </div>
-
-                        {isTrending && (
-                          <Flame className="h-6 w-6 text-warning" />
-                        )}
-                      </div>
-
-                      <Button
-                        type="button"
-                        variant={alreadySeen ? "secondary" : "outline"}
-                        className="mt-4 w-full"
-                        onClick={() => confirmSeen(report)}
-                        disabled={alreadySeen}
-                      >
-                        {alreadySeen ? (
-                          <>
-                            <Check className="h-4 w-4" />
-                            You&apos;ve Seen This
-                          </>
-                        ) : (
-                          "I've Seen This Too"
-                        )}
-                      </Button>
-                    </div>
-
                     {/* SAFETY WARNING */}
                     {report.risk_level ===
                       "HIGH_RISK" && (
@@ -587,7 +665,7 @@ export default function ScamWatchPage() {
                         message.
                       </div>
                     )}
-                  </CardContent>
+                  </div>
                 </Card>
               );
             })}

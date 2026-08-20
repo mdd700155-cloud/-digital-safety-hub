@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Sparkles,
@@ -18,6 +18,38 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 
+const STORAGE_KEY = "scamwatch_report_persisted_state_v1";
+
+type PersistedReportState = {
+  scamType: string;
+  riskLevel: string;
+  message: string;
+  url: string;
+  description: string;
+};
+
+function loadPersistedReport(): PersistedReportState | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedReportState;
+    if (typeof parsed === "object" && parsed !== null) {
+      return {
+        scamType: typeof parsed.scamType === "string" ? parsed.scamType : "",
+        riskLevel: ["HIGH_RISK", "SUSPICIOUS", "SAFE"].includes(parsed.riskLevel) ? parsed.riskLevel : "HIGH_RISK",
+        message: typeof parsed.message === "string" ? parsed.message : "",
+        url: typeof parsed.url === "string" ? parsed.url : "",
+        description: typeof parsed.description === "string" ? parsed.description : "",
+      };
+    }
+    return null;
+  } catch {
+    localStorage.removeItem(STORAGE_KEY);
+    return null;
+  }
+}
+
 type ReportScamFormProps = {
   onSubmitted: () => void;
 };
@@ -27,31 +59,48 @@ export default function ReportScamForm({
 }: ReportScamFormProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const persisted = loadPersistedReport();
 
-  const [scamType, setScamType] = useState(
-    () => searchParams.get("scamType") ?? ""
+  const hasUrlParams = Boolean(
+    searchParams.get("scamType") ||
+      searchParams.get("riskLevel") ||
+      searchParams.get("message") ||
+      searchParams.get("url") ||
+      searchParams.get("description")
   );
-  const [riskLevel, setRiskLevel] = useState(() => {
-    const level = searchParams.get("riskLevel");
-    return level === "HIGH_RISK" ||
-      level === "SUSPICIOUS" ||
-      level === "SAFE"
-      ? level
-      : "HIGH_RISK";
+
+  const [scamType, setScamType] = useState<string>(
+    () => (hasUrlParams ? searchParams.get("scamType") ?? "" : persisted?.scamType ?? "")
+  );
+  const [riskLevel, setRiskLevel] = useState<string>(() => {
+    if (hasUrlParams) {
+      const level = searchParams.get("riskLevel");
+      return level === "HIGH_RISK" || level === "SUSPICIOUS" || level === "SAFE" ? level : "HIGH_RISK";
+    }
+    return persisted?.riskLevel ?? "HIGH_RISK";
   });
-  const [message, setMessage] = useState(
-    () => searchParams.get("message") ?? ""
+  const [message, setMessage] = useState<string>(
+    () => (hasUrlParams ? searchParams.get("message") ?? "" : persisted?.message ?? "")
   );
-  const [url, setUrl] = useState(
-    () => searchParams.get("url") ?? ""
+  const [url, setUrl] = useState<string>(
+    () => (hasUrlParams ? searchParams.get("url") ?? "" : persisted?.url ?? "")
   );
-  const [description, setDescription] = useState(
-    () => searchParams.get("description") ?? ""
+  const [description, setDescription] = useState<string>(
+    () => (hasUrlParams ? searchParams.get("description") ?? "" : persisted?.description ?? "")
   );
 
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const toSave: PersistedReportState = { scamType, riskLevel, message, url, description };
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    } catch {
+      // ignore
+    }
+  }, [scamType, riskLevel, message, url, description]);
 
   const fromScan = Boolean(
     searchParams.get("scamType") ||
@@ -96,6 +145,12 @@ export default function ReportScamForm({
     setMessage("");
     setUrl("");
     setDescription("");
+
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
 
     // Remove the pre-filled URL parameters after successful submission
     router.replace("/scamwatch");

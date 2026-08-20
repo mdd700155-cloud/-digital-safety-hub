@@ -166,5 +166,58 @@ export const safetyTopics: SafetyTopic[] = [
       "Never share OTPs or card details with anyone claiming to be support.",
       "No legitimate support team will ever ask you to install remote-access software."
     ]
+  },
+  {
+    id: "deepfake-ai-protection",
+    title: "Deepfake & AI Voice Scams",
+    description: "Fraudsters use AI-generated voices, face-swapped videos, and synthetic images to impersonate loved ones or officials and extort money.",
+    howItWorks: "You receive an urgent call or voice note from someone who sounds exactly like your child, parent, or boss. They claim to be in an emergency — an accident, arrest, or hospital situation — and beg you to send money immediately before you can verify.",
+    warningSigns: [
+      "An unexpected call or voice message from a loved one asking for urgent money",
+      "The caller says they can only communicate by voice note or a strange number",
+      "Heavy pressure to send UPI, crypto, or cash before you can talk to anyone else",
+      "A face on a video call that looks slightly unnatural or has inconsistent lighting/backgrounds"
+    ],
+    example: "Mom, I had a major accident on the highway. The police are here and I need ₹80,000 for surgery right now. Don't call Dad, just send it to this UPI ID — I'll explain later.",
+    whatToDo: [
+      "Never send money based solely on a voice call or message. End the call and verify using a trusted phone number you already have.",
+      "Set up a secret safety word or code phrase with family members. Real emergency callers should be able to provide it.",
+      "If you receive a suspicious video of a loved one, ask them to make a specific gesture or write a specific word to prove it is live."
+    ]
+  },
+  {
+    id: "money-scam-recovery-steps",
+    title: "After Being Scammed: First Steps",
+    description: "A quick guide on what to do immediately after you realize you have lost money or shared credentials with a scammer.",
+    howItWorks: "Time is critical after a scam. Acting within the first hour can often freeze payments or recover funds before the scammer withdraws them. Most people waste time panicking or hiding the incident — use this checklist instead.",
+    warningSigns: [
+      "You just sent money or UPI and realize the recipient was a fraud",
+      "You shared an OTP, PIN, or password with someone who contacted you",
+      "A caller is threatening you with arrest or 'digital arrest' if you don't pay"
+    ],
+    example: "I just paid ₹25,000 for a fake KYC update. The website looked exactly like my bank's and now the page is gone.",
+    whatToDo: [
+      "Call your bank or payment provider's OFFICIAL fraud helpline immediately and ask to freeze or reverse the transaction.",
+      "Report the incident on cybercrime.gov.in and — for financial fraud — call 1930 within the first hour.",
+      "Change all passwords and PINs for any account that may be affected, especially if credentials were shared.",
+      "Do not feel ashamed or hide it. Fast reporting is the biggest factor in whether funds can be recovered."
+    ]
+  },
+  {
+    id: "sim-swap-mobile-fraud",
+    title: "SIM Swap & Mobile Fraud",
+    description: "Fraudsters get a duplicate SIM issued in your name to hijack all your SMS, calls, OTPs, and access to your bank and UPI apps.",
+    howItWorks: "The scammer first collects your personal details (name, phone, Aadhaar number) from social media or a data leak. They then impersonate you at a mobile store or online and request a SIM replacement. When your phone suddenly loses signal, your new SIM is in their hands — and so are all your incoming OTPs for banking, UPI, and social media.",
+    warningSigns: [
+      "Your phone suddenly shows 'No signal' or 'SIM not registered' for hours in an area with normal coverage",
+      "You receive SMSes saying 'Your SIM replacement request has been processed' or 'Welcome to the network' when you did not request one",
+      "Your UPI or bank app logs you out, or you receive OTPs for transactions you didn't initiate"
+    ],
+    example: "My SIM stopped working at 11 AM. By noon, ₹45,000 was gone from my UPI and savings account through three transactions I never approved.",
+    whatToDo: [
+      "If you lose signal suddenly, call your mobile operator FROM ANOTHER NUMBER immediately and freeze or lock your SIM.",
+      "Never share an OTP that says 'for SIM verification' or 'port request' — no genuine process requires you to read it out.",
+      "Set up SIM PIN and app lock on your phone, and use authenticator-app 2FA for banks instead of SMS 2FA whenever possible."
+    ]
   }
 ];

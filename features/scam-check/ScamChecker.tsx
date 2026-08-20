@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,19 +15,57 @@ import { QrScanner } from "./QrScanner";
 import { UnifiedAudioAnalyzer } from "../voice-analysis/UnifiedAudioAnalyzer";
 import { DeepfakeImageDetector } from "@/features/deepfake-detection/DeepfakeImageDetector";
 
+const STORAGE_KEY = "scam_checker_persisted_state_v1";
+
+interface PersistedScamCheckerState {
+  activeTab: string;
+  inputValue: string;
+  qrScanned: string | null;
+}
+
+function loadPersistedState(): PersistedScamCheckerState | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedScamCheckerState;
+    if (typeof parsed === "object" && parsed !== null) {
+      return {
+        activeTab: typeof parsed.activeTab === "string" ? parsed.activeTab : "message",
+        inputValue: typeof parsed.inputValue === "string" ? parsed.inputValue : "",
+        qrScanned: typeof parsed.qrScanned === "string" ? parsed.qrScanned : null,
+      };
+    }
+    return null;
+  } catch {
+    localStorage.removeItem(STORAGE_KEY);
+    return null;
+  }
+}
+
 interface ScamCheckerProps {
   compact?: boolean;
 }
 
 export function ScamChecker({ compact = false }: ScamCheckerProps) {
-  const [activeTab, setActiveTab] = useState<string>("message");
-  const [inputValue, setInputValue] = useState("");
+  const persisted = loadPersistedState();
+  const [activeTab, setActiveTab] = useState<string>(persisted?.activeTab ?? "message");
+  const [inputValue, setInputValue] = useState<string>(persisted?.inputValue ?? "");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [qrScanned, setQrScanned] = useState<string | null>(null);
+  const [qrScanned, setQrScanned] = useState<string | null>(persisted?.qrScanned ?? null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const toSave: PersistedScamCheckerState = { activeTab, inputValue, qrScanned };
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    } catch {
+      // ignore quota errors
+    }
+  }, [activeTab, inputValue, qrScanned]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -96,6 +134,11 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
     setError(null);
     setQrScanned(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
   };
 
   if (result) {

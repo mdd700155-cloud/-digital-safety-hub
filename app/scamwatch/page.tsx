@@ -222,73 +222,53 @@ export default function ScamWatchPage() {
         icon={<ShieldCheck className="h-4 w-4" />}
         title="ScamWatch"
         description="Real scam warnings shared by the community. See what others are encountering and recognize threats before they reach you."
-        className="mb-12"
+        className="mb-8"
       />
 
-      {/* COMMUNITY STATS */}
-      <section className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Community Reports
-            </p>
-
-            <Users className="h-5 w-5 text-primary" />
-          </div>
-
-          <p className="mt-3 text-3xl font-bold">
-            {reports.length}
-          </p>
-        </Card>
-
-        <Card className="p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              High Risk
-            </p>
-
-            <ShieldAlert className="h-5 w-5 text-destructive" />
-          </div>
-
-          <p className="mt-3 text-3xl font-bold">
-            {highRiskCount}
-          </p>
-        </Card>
-
-        <Card className="p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Suspicious
-            </p>
-
-            <Clock className="h-5 w-5 text-warning" />
-          </div>
-
-          <p className="mt-3 text-3xl font-bold">
-            {suspiciousCount}
-          </p>
-        </Card>
-
-        <Card className="p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">
-              Trending
-            </p>
-
-            <Flame className="h-5 w-5 text-warning" />
-          </div>
-
-          <p className="mt-3 text-3xl font-bold">
-            {trendingCount}
-          </p>
-        </Card>
-      </section>
-
-      {/* REPORT FORM */}
-      <section className="mb-16">
+      {/* REPORT FORM (MAIN HIGHLIGHT) */}
+      <section className="mb-8 md:mb-12">
         <Suspense fallback={null}>
           <ReportScamForm onSubmitted={loadReports} />
         </Suspense>
+      </section>
+
+      {/* COMMUNITY STATS — small info note */}
+      <section className="mb-8 md:mb-12">
+        <Card className="p-3 md:p-4 border-dashed border-muted-foreground/30 bg-muted/20 shadow-none">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-primary shrink-0" />
+              <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+                <span className="font-bold text-foreground mr-1">{reports.length}</span>
+                Reports
+              </span>
+            </div>
+            <span className="hidden sm:block h-4 w-px bg-border/60" />
+            <div className="flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4 text-destructive shrink-0" />
+              <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+                <span className="font-bold text-foreground mr-1">{highRiskCount}</span>
+                High Risk
+              </span>
+            </div>
+            <span className="hidden sm:block h-4 w-px bg-border/60" />
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-warning shrink-0" />
+              <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+                <span className="font-bold text-foreground mr-1">{suspiciousCount}</span>
+                Suspicious
+              </span>
+            </div>
+            <span className="hidden sm:block h-4 w-px bg-border/60" />
+            <div className="flex items-center gap-2">
+              <Flame className="h-4 w-4 text-warning shrink-0" />
+              <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
+                <span className="font-bold text-foreground mr-1">{trendingCount}</span>
+                Trending
+              </span>
+            </div>
+          </div>
+        </Card>
       </section>
 
       {/* COMMUNITY REPORTS */}

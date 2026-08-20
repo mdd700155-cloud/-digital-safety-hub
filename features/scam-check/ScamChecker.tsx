@@ -16,6 +16,14 @@ import { UnifiedAudioAnalyzer } from "../voice-analysis/UnifiedAudioAnalyzer";
 import { DeepfakeImageDetector } from "@/features/deepfake-detection/DeepfakeImageDetector";
 
 const STORAGE_KEY = "scam_checker_persisted_state_v1";
+const ALLOWED_ACTIVE_TABS = new Set([
+  "message",
+  "url",
+  "screenshot",
+  "qr",
+  "audio",
+  "deepfake-image",
+]);
 
 interface PersistedScamCheckerState {
   activeTab: string;
@@ -31,7 +39,10 @@ function loadPersistedState(): PersistedScamCheckerState | null {
     const parsed = JSON.parse(raw) as PersistedScamCheckerState;
     if (typeof parsed === "object" && parsed !== null) {
       return {
-        activeTab: typeof parsed.activeTab === "string" ? parsed.activeTab : "message",
+        activeTab:
+          typeof parsed.activeTab === "string" && ALLOWED_ACTIVE_TABS.has(parsed.activeTab)
+            ? parsed.activeTab
+            : "message",
         inputValue: typeof parsed.inputValue === "string" ? parsed.inputValue : "",
         qrScanned: typeof parsed.qrScanned === "string" ? parsed.qrScanned : null,
       };
@@ -48,24 +59,42 @@ interface ScamCheckerProps {
 }
 
 export function ScamChecker({ compact = false }: ScamCheckerProps) {
-  const persisted = loadPersistedState();
-  const [activeTab, setActiveTab] = useState<string>(persisted?.activeTab ?? "message");
-  const [inputValue, setInputValue] = useState<string>(persisted?.inputValue ?? "");
+  // Keep initial render deterministic for SSR/hydration.
+  const [hasLoadedPersistedState, setHasLoadedPersistedState] = useState(false);
+
+  const [activeTab, setActiveTab] = useState<string>("message");
+  const [inputValue, setInputValue] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [qrScanned, setQrScanned] = useState<string | null>(persisted?.qrScanned ?? null);
+  const [qrScanned, setQrScanned] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Load persisted state only after mount to avoid hydration mismatches.
   useEffect(() => {
+    const persisted = loadPersistedState();
+    // Defer state updates so ESLint doesn't flag setState as being
+    // called synchronously inside an effect.
+    queueMicrotask(() => {
+      if (persisted) {
+        setActiveTab(persisted.activeTab);
+        setInputValue(persisted.inputValue);
+        setQrScanned(persisted.qrScanned);
+      }
+      setHasLoadedPersistedState(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!hasLoadedPersistedState) return;
     const toSave: PersistedScamCheckerState = { activeTab, inputValue, qrScanned };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
     } catch {
       // ignore quota errors
     }
-  }, [activeTab, inputValue, qrScanned]);
+  }, [hasLoadedPersistedState, activeTab, inputValue, qrScanned]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

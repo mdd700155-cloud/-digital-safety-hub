@@ -68,58 +68,48 @@ export default function Home() {
 
   return (
     <div className="flex flex-col w-full">
-      {/* Hero Section — split layout. On mobile: ScamChecker FIRST, then text info below */}
-      <section className="relative overflow-hidden border-b border-border/40 bg-gradient-to-b from-muted/60 via-muted/30 to-background py-8 md:py-16 lg:py-24">
+      {/* Hero Section — split layout */}
+      <section className="relative overflow-hidden border-b border-border/40 bg-gradient-to-b from-muted/60 via-muted/30 to-background py-16 md:py-24">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--primary)_0%,transparent_60%)] opacity-[0.04]" />
         <PageContainer className="relative">
-          <div className="grid items-center gap-6 md:gap-10 lg:gap-12 lg:grid-cols-2">
-            {/* TEXT INFO — on mobile: comes AFTER checker (order-2 lg:order-1) */}
-            <div className="text-center lg:text-left order-2 lg:order-1">
-              <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs sm:text-sm font-medium text-primary mb-3 sm:mb-6 shadow-sm">
-                <ShieldCheck className="mr-1.5 h-3 w-3 sm:h-4 sm:w-4" /> Your Digital Safety Companion
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <div className="text-center lg:text-left">
+              <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary mb-6 shadow-sm">
+                <ShieldCheck className="mr-2 h-4 w-4" /> Your Digital Safety Companion
               </div>
-              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground mb-3 sm:mb-6 leading-[1.1]">
+              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground mb-6 leading-[1.1]">
                 Not sure if it&apos;s a scam?{" "}
                 <span className="text-foreground">Check it before you act.</span>
               </h1>
-              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-muted-foreground leading-relaxed mb-4 sm:mb-8 max-w-xl mx-auto lg:mx-0">
+              <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-8">
                 Instantly check suspicious messages, links, screenshots, QR codes, audio, and face images. Understand potential risks and receive actionable guidance.
               </p>
-              <div className="flex flex-col sm:flex-row items-center lg:items-start gap-3 sm:gap-4 mb-4 sm:mb-8 max-w-md mx-auto lg:mx-0">
-                <a
-                  href="#scam-check-mobile"
-                  className={cn(buttonVariants({ size: "sm" }), "w-full sm:w-auto sm:px-6 md:px-8 md:h-11 md:text-base lg:hidden px-5")}
-                >
-                  Start checking
-                  <ArrowRight className="ml-2 h-3.5 w-3.5 md:h-4 md:w-4" />
-                </a>
+              <div className="flex flex-col sm:flex-row items-center lg:items-start gap-4 mb-8">
                 <a
                   href="#scam-check"
-                  className={cn(buttonVariants({ size: "lg" }), "px-8 w-full sm:w-auto hidden lg:inline-flex")}
+                  className={cn(buttonVariants({ size: "lg" }), "px-8 w-full sm:w-auto")}
                 >
                   Check it now
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </a>
                 <Link
                   href="/report"
-                  className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-full sm:w-auto sm:px-6 md:px-8 md:h-11 md:text-base px-5")}
+                  className={cn(buttonVariants({ variant: "outline", size: "lg" }), "px-8 w-full sm:w-auto")}
                 >
                   Already been scammed?
                 </Link>
               </div>
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-4 sm:gap-x-6 gap-y-1.5 sm:gap-y-2 max-w-md mx-auto lg:mx-0">
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-2">
                 {trustPoints.map((point) => (
-                  <span key={point.label} className="flex items-center gap-1.5 text-[11px] sm:text-sm text-muted-foreground">
-                    <point.icon className="h-3 w-3 sm:h-4 sm:w-4 text-primary/70" />
+                  <span key={point.label} className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <point.icon className="h-4 w-4 text-primary/70" />
                     {point.label}
                   </span>
                 ))}
               </div>
             </div>
 
-            {/* SCAM CHECKER — on mobile comes FIRST (order-1 lg:order-2) */}
-            <div id="scam-check" className="scroll-mt-6 lg:scroll-mt-24 order-1 lg:order-2">
-              <div id="scam-check-mobile" className="scroll-mt-4" />
+            <div id="scam-check" className="scroll-mt-24">
               <div className="rounded-2xl bg-muted/50 p-1 ring-1 ring-border/60">
                 <div className="rounded-[15px] bg-background">
                   <ScamChecker compact />

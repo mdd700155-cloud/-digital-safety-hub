@@ -50,7 +50,7 @@ function computeFftMagnitudes(realIn: Float32Array): Float32Array {
   let j = 0;
   for (let i = 0; i < N - 1; i++) {
     if (i < j) {
-      let temp = real[i];
+      const temp = real[i];
       real[i] = real[j];
       real[j] = temp;
     }

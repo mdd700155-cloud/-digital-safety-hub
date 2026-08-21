@@ -54,6 +54,24 @@ const ANALYSIS_MODELS = [
 
 const RETRY_DELAYS_MS = [1000, 2000, 3000];
 
+const LANGUAGE_NAMES: Record<string, string> = {
+  en: "English",
+  hi: "Hindi",
+  bn: "Bengali",
+  ta: "Tamil",
+  te: "Telugu",
+  mr: "Marathi",
+  gu: "Gujarati",
+  kn: "Kannada",
+  ml: "Malayalam",
+  pa: "Punjabi",
+  or: "Odia",
+};
+
+function getLanguageName(code: string): string {
+  return LANGUAGE_NAMES[code] ?? "English";
+}
+
 type GenerateContentMethod = NonNullable<GoogleGenAI["models"]>["generateContent"];
 
 async function generateWithRetry(
@@ -101,7 +119,8 @@ export async function analyzeWithGemini(
   content: string,
   contentType: "url" | "message",
   heuristicSignals: string[],
-  threatIntelMatch?: boolean
+  threatIntelMatch?: boolean,
+  language?: string
 ): Promise<GeminiAnalysisResponse | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -134,6 +153,7 @@ Heuristic signals already detected by our engine:
 ${heuristicSignals.length > 0 ? heuristicSignals.join("\n") : "None"}
 
 Threat Intelligence (URLhaus malware DB) match: ${threatIntelMatch ? "YES — known malware distribution URL" : "No match found (absence of match does NOT mean safe)"}
+${language && language !== "en" ? `\nIMPORTANT: Respond entirely in ${getLanguageName(language)}. Translate the summary, signals, and recommendations into ${getLanguageName(language)}. Keep risk level codes (SAFE, SUSPICIOUS, HIGH_RISK) and confidence codes (LOW, MEDIUM, HIGH) in English.` : ""}
 
 Provide your contextual security assessment now.`;
 
@@ -171,7 +191,8 @@ Provide your contextual security assessment now.`;
 
 export async function analyzeImageWithGemini(
   base64Image: string,
-  mimeType: string
+  mimeType: string,
+  language?: string
 ): Promise<GeminiAnalysisResponse | null> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -190,7 +211,8 @@ CRITICAL RULES:
 3. Analyze for: phishing language, credential requests (OTP, password, PIN, CVV), payment fraud, impersonation, suspicious URLs, urgency tactics, fake warnings.
 4. Extract any URLs visible in the image into extractedUrls.
 5. Be conservative. If the image appears to show a normal conversation or website, prefer SAFE.
-6. Avoid definitive language like "this is definitely a scam" unless evidence is very clear.`;
+6. Avoid definitive language like "this is definitely a scam" unless evidence is very clear.
+${language && language !== "en" ? `\n7. Respond entirely in ${getLanguageName(language)}. Translate the summary, signals, and recommendations into ${getLanguageName(language)}. Keep risk level codes (SAFE, SUSPICIOUS, HIGH_RISK) and confidence codes (LOW, MEDIUM, HIGH) in English.` : ""}`;
 
     const response = await generateWithRetry(ai, {
       contents: [

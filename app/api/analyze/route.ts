@@ -22,7 +22,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { type, content } = validationResult.data;
+    const { type, content, language } = validationResult.data;
 
     const finalHeuristicSignals: string[] = [];
     let finalWeightedSignals: UrlSignal[] = [];
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       const mimeType = header.replace("data:", "").replace(";base64", "");
 
       try {
-        geminiResult = await analyzeImageWithGemini(base64Data, mimeType);
+        geminiResult = await analyzeImageWithGemini(base64Data, mimeType, language);
         if (!geminiResult) {
           geminiStatus = "FAILED";
           console.log("[Security] Gemini analysis: FAILED");
@@ -167,7 +167,8 @@ export async function POST(request: Request) {
           content,
           type === "url" || (type === "qr" && urlsToAnalyze.length > 0) ? "url" : "message",
           finalHeuristicSignals,
-          finalThreatIntel?.match
+          finalThreatIntel?.match,
+          language
         );
         if (geminiResult) {
           geminiStatus = "SUCCESS";
@@ -197,6 +198,7 @@ export async function POST(request: Request) {
           geminiSummary:
             "Analyzed using structural heuristics and threat intelligence only. AI analysis was unavailable.",
           geminiRiskLevel: "SAFE", // Aggregator will upgrade based on heuristicScore
+          language,
         })
       );
     }
@@ -218,6 +220,7 @@ export async function POST(request: Request) {
       geminiSignals: geminiResult.signals,
       geminiRecommendations: geminiResult.recommendations,
       geminiSummary: geminiResult.summary,
+      language,
     });
 
     return NextResponse.json(finalResult);

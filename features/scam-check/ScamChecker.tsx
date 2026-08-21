@@ -26,10 +26,25 @@ const ALLOWED_ACTIVE_TABS = new Set([
   "deepfake-image",
 ]);
 
+const OUTPUT_LANGUAGES = [
+  { code: "en", label: "English" },
+  { code: "hi", label: "हिन्दी" },
+  { code: "bn", label: "বাংলা" },
+  { code: "ta", label: "தமிழ்" },
+  { code: "te", label: "తెలుగు" },
+  { code: "mr", label: "मराठी" },
+  { code: "gu", label: "ગુજરાતી" },
+  { code: "kn", label: "ಕನ್ನಡ" },
+  { code: "ml", label: "മലയാളം" },
+  { code: "pa", label: "ਪੰਜਾਬੀ" },
+  { code: "or", label: "ଓଡ଼ିଆ" },
+];
+
 interface PersistedScamCheckerState {
   activeTab: string;
   inputValue: string;
   qrScanned: string | null;
+  outputLanguage: string;
 }
 
 function loadPersistedState(): PersistedScamCheckerState | null {
@@ -46,6 +61,7 @@ function loadPersistedState(): PersistedScamCheckerState | null {
             : "message",
         inputValue: typeof parsed.inputValue === "string" ? parsed.inputValue : "",
         qrScanned: typeof parsed.qrScanned === "string" ? parsed.qrScanned : null,
+        outputLanguage: typeof parsed.outputLanguage === "string" ? parsed.outputLanguage : "en",
       };
     }
     return null;
@@ -69,6 +85,7 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [qrScanned, setQrScanned] = useState<string | null>(null);
+  const [outputLanguage, setOutputLanguage] = useState<string>("en");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -82,6 +99,7 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
         setActiveTab(persisted.activeTab);
         setInputValue(persisted.inputValue);
         setQrScanned(persisted.qrScanned);
+        setOutputLanguage(persisted.outputLanguage);
       }
       setHasLoadedPersistedState(true);
     });
@@ -89,13 +107,13 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
 
   useEffect(() => {
     if (!hasLoadedPersistedState) return;
-    const toSave: PersistedScamCheckerState = { activeTab, inputValue, qrScanned };
+    const toSave: PersistedScamCheckerState = { activeTab, inputValue, qrScanned, outputLanguage };
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
     } catch {
       // ignore quota errors
     }
-  }, [hasLoadedPersistedState, activeTab, inputValue, qrScanned]);
+  }, [hasLoadedPersistedState, activeTab, inputValue, qrScanned, outputLanguage]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -125,7 +143,7 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, content }),
+        body: JSON.stringify({ type, content, language: outputLanguage }),
       });
 
       if (!response.ok) {
@@ -141,7 +159,7 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
     } finally {
       setIsAnalyzing(false);
     }
-  }, []);
+  }, [outputLanguage]);
 
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -255,6 +273,24 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
                   <span className="tabular-nums whitespace-nowrap">
                     {inputValue.length} chars
                   </span>
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="output-language">Output Language</Label>
+                <select
+                  id="output-language"
+                  value={outputLanguage}
+                  onChange={(e) => setOutputLanguage(e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  {OUTPUT_LANGUAGES.map((lang) => (
+                    <option key={lang.code} value={lang.code}>
+                      {lang.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  Analysis results will be shown in this language.
                 </p>
               </div>
             </TabsContent>

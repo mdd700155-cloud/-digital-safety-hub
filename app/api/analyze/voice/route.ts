@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeVoiceAudio } from "@/lib/voice/voiceAnalyzer";
-import { voiceUploadSchema } from "@/lib/validation/voice";
+import { MAX_AUDIO_SIZE_BYTES, voiceUploadSchema } from "@/lib/validation/voice";
 
 export const runtime = "nodejs";
+const MAX_MULTIPART_BODY_BYTES = 13 * 1024 * 1024;
 
 export async function POST(request: NextRequest) {
   try {
+    const contentLength = Number(request.headers.get("content-length"));
+    if (Number.isFinite(contentLength) && contentLength > MAX_MULTIPART_BODY_BYTES) {
+      return NextResponse.json({ error: "Audio upload is too large." }, { status: 413 });
+    }
+
     const formData = await request.formData();
     const file = formData.get("file");
     const durationField = formData.get("durationSeconds");
@@ -13,6 +19,13 @@ export async function POST(request: NextRequest) {
     if (!(file instanceof File)) {
       return NextResponse.json(
         { error: "Please attach an audio file (field name: file)." },
+        { status: 400 }
+      );
+    }
+
+    if (file.size === 0 || file.size > MAX_AUDIO_SIZE_BYTES) {
+      return NextResponse.json(
+        { error: "The audio file is empty or exceeds the 12 MB limit." },
         { status: 400 }
       );
     }

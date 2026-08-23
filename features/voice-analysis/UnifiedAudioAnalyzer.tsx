@@ -63,8 +63,8 @@ export function UnifiedAudioAnalyzer() {
       setAnalysisStep("Running AI analysis models...");
       const formDataDeepfake = new FormData();
       formDataDeepfake.append("file", uploadBlob, audio.name);
-      formDataDeepfake.append("clientScores", JSON.stringify(clientFeatures));
-      formDataDeepfake.append("clientAggregateScore", clientAggregateScore.toString());
+      formDataDeepfake.append("featureScores", JSON.stringify(clientFeatures));
+      formDataDeepfake.append("aggregateScore", clientAggregateScore.toString());
 
       const formDataVoice = new FormData();
       formDataVoice.append("file", uploadBlob, audio.name);

@@ -9,8 +9,16 @@ import { analyzeWithGemini, analyzeImageWithGemini } from "@/lib/ai/gemini";
 import { ThreatIntel } from "@/types/analysis";
 import { UrlSignal } from "@/lib/security/urlAnalyzer";
 
+const MAX_REQUEST_BODY_BYTES = 6 * 1024 * 1024;
+const MAX_SCREENSHOT_BYTES = 4 * 1024 * 1024;
+
 export async function POST(request: Request) {
   try {
+    const contentLength = Number(request.headers.get("content-length"));
+    if (Number.isFinite(contentLength) && contentLength > MAX_REQUEST_BODY_BYTES) {
+      return NextResponse.json({ error: "Request is too large." }, { status: 413 });
+    }
+
     const body = await request.json();
 
     // Validate request
@@ -49,11 +57,14 @@ export async function POST(request: Request) {
         }
       }
     } else if (type === "screenshot") {
-      if (!content.startsWith("data:image/")) {
+      const dataUrlMatch = content.match(/^data:(image\/(?:jpeg|png|webp|gif));base64,([A-Za-z0-9+/=]+)$/);
+      if (!dataUrlMatch) {
         return NextResponse.json({ error: "Invalid image format" }, { status: 400 });
       }
-      const [header, base64Data] = content.split(",");
-      const mimeType = header.replace("data:", "").replace(";base64", "");
+      const [, mimeType, base64Data] = dataUrlMatch;
+      if (Buffer.byteLength(base64Data, "base64") > MAX_SCREENSHOT_BYTES) {
+        return NextResponse.json({ error: "Image file is too large." }, { status: 413 });
+      }
 
       try {
         geminiResult = await analyzeImageWithGemini(base64Data, mimeType, language);

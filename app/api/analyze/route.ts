@@ -1,13 +1,6 @@
 import { NextResponse } from "next/server";
 import { analyzeRequestSchema } from "@/lib/validation/analyze";
-import { analyzeUrl } from "@/lib/security/urlAnalyzer";
-import { analyzeMessage } from "@/lib/security/messageAnalyzer";
-import { checkUrlhaus } from "@/lib/security/urlhaus";
-import { aggregateRisk } from "@/lib/security/aggregator";
-import { classifyUrl } from "@/lib/security/mlUrlClassifier";
-import { analyzeWithGemini, analyzeImageWithGemini } from "@/lib/ai/gemini";
-import { ThreatIntel } from "@/types/analysis";
-import { UrlSignal } from "@/lib/security/urlAnalyzer";
+import { analyzeContent } from "@/lib/orchestrator/orchestrator";
 
 export async function POST(request: Request) {
   try {
@@ -24,15 +17,10 @@ export async function POST(request: Request) {
 
     const { type, content, language } = validationResult.data;
 
-    const finalHeuristicSignals: string[] = [];
-    let finalWeightedSignals: UrlSignal[] = [];
-    let finalThreatIntel: ThreatIntel | undefined = undefined;
-    let geminiResult = null;
-    let geminiStatus = "FAILED";
-    let urlhausStatus = "FAILED";
-    let mlStatus = "UNAVAILABLE";
-    const urlsToAnalyze: string[] = [];
+    // Call the unified orchestrator
+    const result = await analyzeContent({ content, type });
 
+<<<<<<< HEAD
     // 1. Initial Routing and Deterministic Analysis
     if (type === "url") {
       urlsToAnalyze.push(content);
@@ -224,6 +212,9 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(finalResult);
+=======
+    return NextResponse.json(result);
+>>>>>>> origin/saad2
   } catch (error: unknown) {
     console.error("API Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -36,6 +36,8 @@ interface ResultDisplayProps {
   onReset: () => void;
   reportedContent?: string;
   contentType?: string;
+  emlFileName?: string;
+  emlRaw?: string;
 }
 
 export function ResultDisplay({
@@ -43,6 +45,8 @@ export function ResultDisplay({
   onReset,
   reportedContent,
   contentType,
+  emlFileName,
+  emlRaw,
 }: ResultDisplayProps) {
   const isSafe = result.level === "SAFE";
   const isSuspicious = result.level === "SUSPICIOUS";
@@ -416,18 +420,21 @@ export function ResultDisplay({
                 </div>
               </div>
 
-              {/* Pre-filled ScamWatch link */}
+              {/* Pre-filled ScamWatch link — includes .eml if present */}
               <WarnCommunityButton
                 scamType={isHighRisk ? "Potential Scam" : "Suspicious Activity"}
                 riskLevel={result.level}
                 message={reportedMessage}
                 description={scamWatchDescription}
                 url={reportedUrl}
+                emlFileName={emlFileName}
+                emlRaw={emlRaw}
                 className="mt-4 w-full"
               />
 
               <p className="mt-2 text-center text-xs text-muted-foreground">
                 Your analysis will be used to pre-fill the report.
+                {emlFileName ? ` Includes ${emlFileName}.` : ""}
               </p>
             </div>
           )}

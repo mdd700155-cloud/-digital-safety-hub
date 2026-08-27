@@ -1,13 +1,13 @@
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { ScanSearch, MessageSquare, Link as LinkIcon, Image as ImageIcon, QrCode } from "lucide-react";
+import { ScanSearch, MessageSquare, Link as LinkIcon, ScanFace, Mail } from "lucide-react";
 import { ScamChecker } from "@/features/scam-check/ScamChecker";
 
 const checkTypes = [
-  { icon: MessageSquare, label: "Suspicious messages", desc: "Emails, SMS, and WhatsApp texts" },
-  { icon: LinkIcon, label: "Links & URLs", desc: "Check before you click" },
-  { icon: ImageIcon, label: "Screenshots", desc: "Upload an image to analyze" },
-  { icon: QrCode, label: "QR codes", desc: "Scan and analyze safely" },
+  { icon: Mail, label: "Mail", desc: "Email headers & .eml forensics" },
+  { icon: LinkIcon, label: "URL", desc: "Phishing links checked without visiting" },
+  { icon: MessageSquare, label: "Message · QR · Screenshot", desc: "SMS/WhatsApp, QR codes & screenshots" },
+  { icon: ScanFace, label: "Image & Voice", desc: "Face deepfake & voice cloning checks" },
 ];
 
 export default function CheckPage() {

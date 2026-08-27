@@ -21,6 +21,8 @@ export interface OrchestratorInput {
   content: string;
   /** The content type. If omitted, the orchestrator will attempt auto-detection. */
   type?: InputType;
+  /** Output language for localized summaries (e.g. "hi", "bn"). Optional, defaults to English. */
+  language?: string;
 }
 
 // ── Orchestrator Result ────────────────────────────────────────────────

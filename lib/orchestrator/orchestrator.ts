@@ -77,6 +77,7 @@ export async function analyzeContent(input: OrchestratorInput): Promise<Orchestr
   const pipelineStart = Date.now();
   const stages: StageVerdict[] = [];
   const resolvedType = input.type ?? detectInputType(input.content);
+  const language = input.language;
 
   const heuristicSignals: string[] = [];
   let weightedSignals: UrlSignal[] = [];
@@ -119,7 +120,7 @@ export async function analyzeContent(input: OrchestratorInput): Promise<Orchestr
     const timer = timedStage("gemini_image");
 
     try {
-      const imageResult = await analyzeImageWithGemini(base64Data, mimeType);
+      const imageResult = await analyzeImageWithGemini(base64Data, mimeType, language);
       if (!imageResult) {
         stages.push(timer.finish("error", "Gemini image analysis returned null"));
         return buildErrorResult(resolvedType, stages, pipelineStart,
@@ -153,6 +154,7 @@ export async function analyzeContent(input: OrchestratorInput): Promise<Orchestr
           geminiSignals: imageResult.signals,
           geminiRecommendations: imageResult.recommendations,
           geminiSummary: imageResult.summary,
+          language,
         });
 
         return {
@@ -280,7 +282,8 @@ export async function analyzeContent(input: OrchestratorInput): Promise<Orchestr
         input.content,
         contentType,
         heuristicSignals,
-        threatIntel?.match
+        threatIntel?.match,
+        language
       );
 
       if (geminiResult) {
@@ -314,6 +317,7 @@ export async function analyzeContent(input: OrchestratorInput): Promise<Orchestr
       ],
       geminiSummary: "Analyzed using structural heuristics and threat intelligence only. AI analysis was unavailable.",
       geminiRiskLevel: "SAFE",
+      language,
     });
 
     return {
@@ -331,6 +335,7 @@ export async function analyzeContent(input: OrchestratorInput): Promise<Orchestr
     geminiSignals: geminiResult?.signals ?? [],
     geminiRecommendations: geminiResult?.recommendations ?? [],
     geminiSummary: geminiResult?.summary ?? "Analysis complete.",
+    language,
   });
 
   return {

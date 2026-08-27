@@ -4,11 +4,8 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { MessageSquare, Link as LinkIcon, Image as ImageIcon, QrCode, AudioWaveform, ScanFace, UploadCloud, X, ShieldCheck } from "lucide-react";
+import { ShieldCheck, AudioWaveform, ScanFace, UploadCloud, X, QrCode, Mail, FileText, Link2, MessageSquare } from "lucide-react";
 import { AnalysisResult } from "@/types/analysis";
 import { ResultDisplay } from "./ResultDisplay";
 import { QrScanner } from "./QrScanner";
@@ -16,15 +13,16 @@ import { AnalysisLoader } from "./AnalysisLoader";
 import { UnifiedAudioAnalyzer } from "../voice-analysis/UnifiedAudioAnalyzer";
 import { DeepfakeImageDetector } from "@/features/deepfake-detection/DeepfakeImageDetector";
 
-const STORAGE_KEY = "scam_checker_persisted_state_v1";
-const ALLOWED_ACTIVE_TABS = new Set([
-  "message",
-  "url",
-  "screenshot",
-  "qr",
-  "audio",
-  "deepfake-image",
-]);
+const STORAGE_KEY = "scam_checker_persisted_state_v2";
+const ALLOWED_ACTIVE_TABS = new Set(["url", "email", "message-qr", "image-voice"]);
+
+// Migration for old persisted values -> new tab ids (frontend-only rename) — Mail first
+const TAB_MIGRATION: Record<string, string> = {
+  general: "email",
+  "url-mail": "email",
+  audio: "image-voice",
+  "deepfake-image": "image-voice",
+};
 
 const OUTPUT_LANGUAGES = [
   { code: "en", label: "English" },
@@ -43,7 +41,6 @@ const OUTPUT_LANGUAGES = [
 interface PersistedScamCheckerState {
   activeTab: string;
   inputValue: string;
-  qrScanned: string | null;
   outputLanguage: string;
 }
 
@@ -54,13 +51,11 @@ function loadPersistedState(): PersistedScamCheckerState | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as PersistedScamCheckerState;
     if (typeof parsed === "object" && parsed !== null) {
+      const rawTab = typeof parsed.activeTab === "string" ? parsed.activeTab : "email";
+      const migratedTab = TAB_MIGRATION[rawTab] ?? rawTab;
       return {
-        activeTab:
-          typeof parsed.activeTab === "string" && ALLOWED_ACTIVE_TABS.has(parsed.activeTab)
-            ? parsed.activeTab
-            : "message",
+        activeTab: ALLOWED_ACTIVE_TABS.has(migratedTab) ? migratedTab : "email",
         inputValue: typeof parsed.inputValue === "string" ? parsed.inputValue : "",
-        qrScanned: typeof parsed.qrScanned === "string" ? parsed.qrScanned : null,
         outputLanguage: typeof parsed.outputLanguage === "string" ? parsed.outputLanguage : "en",
       };
     }
@@ -76,29 +71,29 @@ interface ScamCheckerProps {
 }
 
 export function ScamChecker({ compact = false }: ScamCheckerProps) {
-  // Keep initial render deterministic for SSR/hydration.
   const [hasLoadedPersistedState, setHasLoadedPersistedState] = useState(false);
-
-  const [activeTab, setActiveTab] = useState<string>("message");
+  const [activeTab, setActiveTab] = useState<string>("email");
   const [inputValue, setInputValue] = useState<string>("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [qrScanned, setQrScanned] = useState<string | null>(null);
   const [outputLanguage, setOutputLanguage] = useState<string>("en");
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // File upload state — tracks name/size for compact display (now only for Email tab)
+  const [uploadedFile, setUploadedFile] = useState<{ name: string; size: number } | null>(null);
 
-  // Load persisted state only after mount to avoid hydration mismatches.
+  // QR scanner state (only for message-qr tab)
+  const [showQrScanner, setShowQrScanner] = useState(false);
+
+  const emailFileRef = useRef<HTMLInputElement>(null);
+  const messageFileRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     const persisted = loadPersistedState();
-    // Defer state updates so ESLint doesn't flag setState as being
-    // called synchronously inside an effect.
     queueMicrotask(() => {
       if (persisted) {
         setActiveTab(persisted.activeTab);
         setInputValue(persisted.inputValue);
-        setQrScanned(persisted.qrScanned);
         setOutputLanguage(persisted.outputLanguage);
       }
       setHasLoadedPersistedState(true);
@@ -107,20 +102,19 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
 
   useEffect(() => {
     if (!hasLoadedPersistedState) return;
-    const toSave: PersistedScamCheckerState = { activeTab, inputValue, qrScanned, outputLanguage };
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ activeTab, inputValue, outputLanguage }));
     } catch {
       // ignore quota errors
     }
-  }, [hasLoadedPersistedState, activeTab, inputValue, qrScanned, outputLanguage]);
+  }, [hasLoadedPersistedState, activeTab, inputValue, outputLanguage]);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      setError("Image size must be less than 5MB");
+      setError("File size must be less than 5MB");
       return;
     }
 
@@ -131,19 +125,31 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
         setError(null);
       }
     };
-    reader.readAsDataURL(file);
+
+    if (file.type.startsWith("image/")) {
+      reader.readAsDataURL(file);
+    } else {
+      // Text file (.eml, .txt) — store metadata for compact card display
+      setUploadedFile({ name: file.name, size: file.size });
+      reader.readAsText(file);
+    }
   };
 
-  const submitAnalysis = useCallback(async (type: string, content: string) => {
+  const submitAnalysis = useCallback(async (content: string, typeHint?: string) => {
     setIsAnalyzing(true);
     setResult(null);
     setError(null);
+    setShowQrScanner(false);
 
     try {
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, content, language: outputLanguage }),
+        body: JSON.stringify({
+          content,
+          ...(typeHint ? { type: typeHint } : {}),
+          ...(outputLanguage && outputLanguage !== "en" ? { language: outputLanguage } : {}),
+        }),
       });
 
       if (!response.ok) {
@@ -164,24 +170,23 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
   const handleAnalyze = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
-    await submitAnalysis(activeTab, inputValue);
+    await submitAnalysis(inputValue);
   };
 
-  // Called by QrScanner when a code is decoded
   const handleQrDecoded = useCallback(async (text: string) => {
-    setQrScanned(text);
     setInputValue(text);
-    // Determine if the QR content is a URL or plain text
-    const type = /^https?:\/\//i.test(text.trim()) ? "url" : "message";
-    await submitAnalysis(type, text);
+    const typeHint = /^https?:\/\//i.test(text.trim()) ? "url" : "message";
+    await submitAnalysis(text, typeHint);
   }, [submitAnalysis]);
 
   const handleReset = () => {
     setResult(null);
     setInputValue("");
     setError(null);
-    setQrScanned(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    setUploadedFile(null);
+    setShowQrScanner(false);
+    if (emailFileRef.current) emailFileRef.current.value = "";
+    if (messageFileRef.current) messageFileRef.current.value = "";
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {
@@ -190,12 +195,29 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
   };
 
   if (result) {
-    return <ResultDisplay result={result} onReset={handleReset} />;
+    const isEmlForward =
+      uploadedFile?.name.toLowerCase().endsWith(".eml") ||
+      result.pipelineTrace?.inputType === "email";
+    return (
+      <ResultDisplay
+        result={result}
+        onReset={handleReset}
+        reportedContent={inputValue}
+        contentType={result.pipelineTrace?.inputType ?? activeTab}
+        emlFileName={isEmlForward ? uploadedFile?.name ?? "email.eml" : undefined}
+        emlRaw={isEmlForward ? inputValue : undefined}
+      />
+    );
   }
 
   if (isAnalyzing) {
-    return <AnalysisLoader key={activeTab} contentType={activeTab} compact={compact} />;
+    // map 4-tab ids to loader-friendly labels (frontend only)
+    const loaderType = activeTab === "url" || activeTab === "email" || activeTab === "message-qr" ? "general" : activeTab;
+    return <AnalysisLoader key={activeTab} contentType={loaderType} compact={compact} />;
   }
+
+  const isImageUpload = inputValue.startsWith("data:image/");
+  const isFileUpload = uploadedFile !== null && !isImageUpload;
 
   return (
     <Card className="border shadow-soft">
@@ -216,35 +238,30 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
           onValueChange={(v) => {
             setActiveTab(v);
             setInputValue("");
-            setQrScanned(null);
             setError(null);
+            setUploadedFile(null);
+            setShowQrScanner(false);
           }}
           className="w-full"
         >
-          <TabsList className={`h-auto! grid w-full min-h-8 grid-cols-2 sm:grid-cols-3 mb-6 bg-muted shadow-sm ${compact ? "min-h-11 gap-3 p-3 sm:-mx-2 sm:w-[calc(100%+1rem)]" : "gap-2 sm:gap-2.5 p-2 sm:p-2.5"}`}>
-            <TabsTrigger value="message" className="flex items-center justify-center gap-2 px-2 py-1.5 sm:px-3 text-[11px] sm:text-sm">
-              <MessageSquare className="h-4 w-4" />
-              <span>Message</span>
+          <TabsList className={`h-auto! grid w-full min-h-8 grid-cols-4 mb-6 bg-muted shadow-sm ${compact ? "min-h-11 gap-1 p-1.5 sm:-mx-2 sm:w-[calc(100%+1rem)]" : "gap-1 sm:gap-2 p-1.5 sm:p-2"}`}>
+            <TabsTrigger value="email" className="flex items-center justify-center gap-1 px-1 sm:px-2 py-1.5 text-[10px] sm:text-xs leading-tight">
+              <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+              <span className="truncate">Mail</span>
             </TabsTrigger>
-            <TabsTrigger value="url" className="flex items-center justify-center gap-2 px-2 py-1.5 sm:px-3 text-[11px] sm:text-sm">
-              <LinkIcon className="h-4 w-4" />
-              <span>Link</span>
+            <TabsTrigger value="url" className="flex items-center justify-center gap-1 px-1 sm:px-2 py-1.5 text-[10px] sm:text-xs leading-tight">
+              <Link2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+              <span className="truncate">URL</span>
             </TabsTrigger>
-            <TabsTrigger value="screenshot" className="flex items-center justify-center gap-2 px-2 py-1.5 sm:px-3 text-[11px] sm:text-sm">
-              <ImageIcon className="h-4 w-4" />
-              <span>Screenshot</span>
+            <TabsTrigger value="message-qr" className="flex items-center justify-center gap-1 px-1 sm:px-2 py-1.5 text-[10px] sm:text-xs leading-tight">
+              <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+              <span className="truncate hidden sm:inline">Msg · QR</span>
+              <span className="truncate sm:hidden">Msg</span>
             </TabsTrigger>
-            <TabsTrigger value="qr" className="flex items-center justify-center gap-2 px-2 py-1.5 sm:px-3 text-[11px] sm:text-sm">
-              <QrCode className="h-4 w-4" />
-              <span>QR Code</span>
-            </TabsTrigger>
-            <TabsTrigger value="audio" className="flex items-center justify-center gap-2 px-2 py-1.5 sm:px-3 text-[11px] sm:text-sm">
-              <AudioWaveform className="h-4 w-4" />
-              <span>Audio</span>
-            </TabsTrigger>
-            <TabsTrigger value="deepfake-image" className="flex items-center justify-center gap-2 px-2 py-1.5 sm:px-3 text-[11px] sm:text-sm">
-              <ScanFace className="h-4 w-4" />
-              <span>Face</span>
+            <TabsTrigger value="image-voice" className="flex items-center justify-center gap-1 px-1 sm:px-2 py-1.5 text-[10px] sm:text-xs leading-tight">
+              <ScanFace className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+              <span className="truncate hidden sm:inline">Image & Voice</span>
+              <span className="truncate sm:hidden">Media</span>
             </TabsTrigger>
           </TabsList>
 
@@ -258,25 +275,218 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
           )}
 
           <form onSubmit={handleAnalyze}>
-            <TabsContent value="message" className="space-y-4 mt-0">
+            {/* Tab 1: Mail — email headers / .eml (now first) */}
+            <TabsContent value="email" className="space-y-4 mt-0">
+              <input
+                type="file"
+                accept=".eml,.txt,message/rfc822"
+                className="hidden"
+                ref={emailFileRef}
+                onChange={handleFileUpload}
+              />
+
               <div className="space-y-2">
-                <Label htmlFor="message">Suspicious Message</Label>
+                {isFileUpload ? (
+                  <div className="border border-border rounded-lg p-4 bg-muted/30 flex items-center gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                      {uploadedFile.name.toLowerCase().endsWith(".eml") ? (
+                        <Mail className="h-6 w-6" />
+                      ) : (
+                        <FileText className="h-6 w-6" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{uploadedFile.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {(uploadedFile.size / 1024).toFixed(1)} KB · Ready to analyze
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setInputValue("");
+                        setUploadedFile(null);
+                        if (emailFileRef.current) emailFileRef.current.value = "";
+                      }}
+                    >
+                      <X className="h-4 w-4 mr-1.5" /> Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Textarea
+                      placeholder="Paste full email content / headers here, or upload .eml…"
+                      className="min-h-[160px] pb-14 resize-none bg-background shadow-sm text-sm"
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                    />
+                    <div className="absolute bottom-2 left-2 right-2 flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="text-xs h-8"
+                        onClick={() => emailFileRef.current?.click()}
+                      >
+                        <UploadCloud className="h-4 w-4 mr-1.5" />
+                        Upload .eml
+                      </Button>
+                      <span className="hidden sm:inline text-xs text-muted-foreground ml-1">
+                        SPF / DKIM / relay check
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-xs text-muted-foreground flex justify-between gap-4 mt-2">
+                  <span>Paste headers or upload .eml — we parse auth signals.</span>
+                  {!isFileUpload && (
+                    <span className="tabular-nums whitespace-nowrap">
+                      {inputValue.length} chars
+                    </span>
+                  )}
+                </p>
+              </div>
+            </TabsContent>
+
+            {/* Tab 2: URL — clean paste-only, same POST /api/analyze */}
+            <TabsContent value="url" className="space-y-4 mt-0">
+              <div className="space-y-2">
                 <Textarea
-                  id="message"
-                  placeholder="Paste the suspicious email, SMS, or WhatsApp message here..."
-                  className="min-h-[150px] resize-none bg-background"
+                  placeholder="Paste a suspicious link or URL here…  e.g. https://example.com/verify"
+                  className="min-h-[160px] resize-none bg-background shadow-sm text-sm"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground flex justify-between gap-4">
-                  <span>Paste any suspicious message text or SMS.</span>
-                  <span className="tabular-nums whitespace-nowrap">
-                    {inputValue.length} chars
-                  </span>
+                  <span>We check phishing signals without visiting the site.</span>
+                  <span className="tabular-nums whitespace-nowrap">{inputValue.length} chars</span>
                 </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="output-language">Output Language</Label>
+            </TabsContent>
+
+            {/* Tab 2: Message + QR + Screenshot — frontend only, same POST /api/analyze */}
+            <TabsContent value="message-qr" className="space-y-4 mt-0">
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                ref={messageFileRef}
+                onChange={handleFileUpload}
+              />
+
+              {showQrScanner ? (
+                <div className="border border-border rounded-xl bg-muted/30 p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-semibold text-sm">Scan QR Code</h3>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setShowQrScanner(false)}>
+                      <X className="h-4 w-4 mr-2" /> Cancel
+                    </Button>
+                  </div>
+                  <QrScanner
+                    onDecoded={handleQrDecoded}
+                    onError={(err) => setError(err)}
+                  />
+                </div>
+              ) : (
+                <div className="space-y-2 relative">
+                  {isImageUpload ? (
+                    <div className="border border-border rounded-lg p-4 bg-muted/30 flex flex-col items-center">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={inputValue} alt="Screenshot preview" className="max-h-48 rounded-lg mb-4 object-contain shadow-soft" />
+                      <p className="text-xs text-muted-foreground mb-3">Screenshot ready — we&apos;ll check text inside the image.</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setInputValue("");
+                          if (messageFileRef.current) messageFileRef.current.value = "";
+                        }}
+                      >
+                        <X className="h-4 w-4 mr-2" /> Remove Screenshot
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <Textarea
+                        placeholder="Paste suspicious message (SMS / WhatsApp / Telegram) here..."
+                        className="min-h-[160px] pb-14 resize-none bg-background shadow-sm text-sm"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                      />
+                      <div className="absolute bottom-2 left-2 right-2 flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="text-xs h-8"
+                          onClick={() => messageFileRef.current?.click()}
+                        >
+                          <UploadCloud className="h-4 w-4 mr-1.5" />
+                          Screenshot
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="text-xs h-8"
+                          onClick={() => setShowQrScanner(true)}
+                        >
+                          <QrCode className="h-4 w-4 mr-1.5" />
+                          Scan QR
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-muted-foreground flex justify-between gap-4 mt-2">
+                    <span>Messages, QR links & screenshots checked the same way.</span>
+                    {!isImageUpload && (
+                      <span className="tabular-nums whitespace-nowrap">
+                        {inputValue.length} chars
+                      </span>
+                    )}
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+
+            {/* Tab 3: Image & Voice — stacked forensic detectors (no backend change) */}
+            <TabsContent value="image-voice" className="space-y-6 mt-0">
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary ring-1 ring-primary/10">
+                      <ScanFace className="h-4 w-4" />
+                    </span>
+                    <h3 className="text-sm font-semibold">Image — Deepfake & AI Check</h3>
+                    <span className="ml-auto text-xs text-muted-foreground hidden sm:inline">Photo forensics</span>
+                  </div>
+                  <DeepfakeImageDetector />
+                </div>
+
+                <div className="border-t border-border/60" />
+
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary ring-1 ring-primary/10">
+                      <AudioWaveform className="h-4 w-4" />
+                    </span>
+                    <h3 className="text-sm font-semibold">Voice — Cloning & Scam Check</h3>
+                    <span className="ml-auto text-xs text-muted-foreground hidden sm:inline">Audio forensics</span>
+                  </div>
+                  <UnifiedAudioAnalyzer />
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Shared output-language selector — visible for text tabs (url / email / message-qr) */}
+            {(activeTab === "url" || activeTab === "email" || activeTab === "message-qr") && !showQrScanner && (
+              <div className="space-y-2 pt-2">
+                <label htmlFor="output-language" className="text-sm font-medium leading-none">Output Language</label>
                 <select
                   id="output-language"
                   value={outputLanguage}
@@ -293,103 +503,10 @@ export function ScamChecker({ compact = false }: ScamCheckerProps) {
                   Analysis results will be shown in this language.
                 </p>
               </div>
-            </TabsContent>
+            )}
 
-            <TabsContent value="url" className="space-y-4 mt-0">
-              <div className="space-y-2">
-                <Label htmlFor="url">Suspicious Link</Label>
-                <Input
-                  id="url"
-                  type="url"
-                  placeholder="https://example.com/..."
-                  className="w-full bg-background"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Paste the full URL. We analyze its structure — we do not visit the website.
-                </p>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="screenshot" className="space-y-4 mt-0">
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                ref={fileInputRef}
-                onChange={handleImageUpload}
-              />
-              <div
-                role="button"
-                tabIndex={0}
-                aria-label="Upload a screenshot"
-                className="border-2 border-dashed rounded-xl p-10 flex flex-col items-center justify-center text-center hover:bg-muted/50 hover:border-primary/40 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:border-ring"
-                onClick={() => !inputValue && fileInputRef.current?.click()}
-                onKeyDown={(e) => {
-                  if ((e.key === "Enter" || e.key === " ") && !inputValue) {
-                    e.preventDefault();
-                    fileInputRef.current?.click();
-                  }
-                }}
-              >
-                {inputValue ? (
-                  <div className="flex flex-col items-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={inputValue} alt="Uploaded preview" className="max-h-40 rounded-lg mb-4 object-contain shadow-soft" />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setInputValue("");
-                        if (fileInputRef.current) fileInputRef.current.value = "";
-                      }}
-                    >
-                      <X className="h-4 w-4 mr-2" /> Remove Image
-                    </Button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="h-12 w-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4 ring-1 ring-primary/10">
-                      <UploadCloud className="h-6 w-6" />
-                    </div>
-                    <h3 className="font-medium mb-1">Click to upload screenshot</h3>
-                    <p className="text-sm text-muted-foreground max-w-xs">PNG, JPG or WEBP (max. 5MB)</p>
-                  </>
-                )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="qr" className="space-y-4 mt-0">
-              <div className="border border-border rounded-xl bg-muted/30 p-6">
-                {qrScanned ? (
-                  <div className="flex flex-col items-center gap-3">
-                    <Badge variant="secondary" className="max-w-full truncate text-xs">
-                      Scanned: {qrScanned.slice(0, 60)}{qrScanned.length > 60 ? "…" : ""}
-                    </Badge>
-                    <p className="text-sm text-muted-foreground">Analyzing decoded content...</p>
-                  </div>
-                ) : (
-                  <QrScanner
-                    onDecoded={handleQrDecoded}
-                    onError={(err) => setError(err)}
-                  />
-                )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="audio" className="space-y-4 mt-0">
-              <UnifiedAudioAnalyzer />
-            </TabsContent>
-
-            <TabsContent value="deepfake-image" className="space-y-4 mt-0">
-              <DeepfakeImageDetector />
-            </TabsContent>
-
-            {/* Submit button — not shown for QR (auto-triggered), Audio, or Deepfake Image (own controls) */}
-            {activeTab !== "qr" && activeTab !== "audio" && activeTab !== "deepfake-image" && (
+            {/* Submit buttons — only for text tabs and when not scanning QR */}
+            {(activeTab === "url" || activeTab === "email" || activeTab === "message-qr") && !showQrScanner && (
               <div className="flex justify-end pt-4 border-t mt-6">
                 {inputValue && (
                   <Button type="button" variant="ghost" className="mr-2" onClick={handleReset}>

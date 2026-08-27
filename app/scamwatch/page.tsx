@@ -16,6 +16,8 @@ import {
   AlertTriangle,
   Loader2,
   Heart,
+  Mail,
+  Download,
 } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -38,6 +40,8 @@ type ScamReport = {
   seen_count: number | null;
   created_at: string | null;
   image_urls: string[] | null;
+  eml_url?: string | null;
+  eml_filename?: string | null;
 };
 
 function getRiskLabel(risk: string) {
@@ -206,7 +210,8 @@ export default function ScamWatchPage() {
         report.scam_type?.toLowerCase().includes(searchText) ||
         report.message?.toLowerCase().includes(searchText) ||
         report.url?.toLowerCase().includes(searchText) ||
-        report.description?.toLowerCase().includes(searchText);
+        report.description?.toLowerCase().includes(searchText) ||
+        report.eml_filename?.toLowerCase().includes(searchText);
 
       return matchesRisk && matchesSearch;
     });
@@ -647,6 +652,51 @@ export default function ScamWatchPage() {
 
                         <p className="whitespace-pre-wrap text-sm leading-6">
                           {report.description}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* EML FILE */}
+                    {report.eml_url && (
+                      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                        <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                          <Mail className="h-3.5 w-3.5" />
+                          Original email (.eml)
+                        </p>
+                        <p className="truncate text-sm font-medium">{report.eml_filename ?? "email.eml"}</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <a
+                            href={report.eml_url}
+                            download={report.eml_filename ?? "email.eml"}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                            Download .eml
+                          </a>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => copyText(report.eml_url!, `eml-${report.id}`)}
+                          >
+                            {copiedId === `eml-${report.id}` ? (
+                              <>
+                                <Check className="h-3.5 w-3.5" />
+                                Copied
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="h-3.5 w-3.5" />
+                                Copy link
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        <p className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
+                          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                          File contains email headers — open locally, don&apos;t click links inside.
                         </p>
                       </div>
                     )}

@@ -40,8 +40,8 @@ type ScamReport = {
   seen_count: number | null;
   created_at: string | null;
   image_urls: string[] | null;
-  eml_url: string | null;
-  eml_filename: string | null;
+  eml_url?: string | null;
+  eml_filename?: string | null;
 };
 
 function getRiskLabel(risk: string) {
@@ -90,7 +90,7 @@ export default function ScamWatchPage() {
     const { data, error } = await supabase
       .from("scam_reports")
       .select(
-        "id, scam_type, risk_level, message, url, description, seen_count, created_at, image_urls, eml_url, eml_filename"
+        "id, scam_type, risk_level, message, url, description, seen_count, created_at, image_urls"
       )
       .order("created_at", { ascending: false });
 
@@ -109,7 +109,7 @@ export default function ScamWatchPage() {
     supabase
       .from("scam_reports")
       .select(
-        "id, scam_type, risk_level, message, url, description, seen_count, created_at, image_urls, eml_url, eml_filename"
+        "id, scam_type, risk_level, message, url, description, seen_count, created_at, image_urls"
       )
       .order("created_at", { ascending: false })
       .then(({ data, error }) => {

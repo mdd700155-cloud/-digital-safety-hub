@@ -24,7 +24,7 @@ export function buildIncidentText(summary: {
     lines.push('');
   }
   lines.push('--');
-  lines.push('This summary is generated locally for your convenience. It is not submitted to any authority by Digital Safety Hub.');
+  lines.push('This summary is generated locally for your convenience. It is not submitted to any authority by ThreatLens AI.');
   return lines.join('\n');
 }
 

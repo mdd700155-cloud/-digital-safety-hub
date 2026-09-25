@@ -24,7 +24,7 @@ export function Footer() {
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-soft">
                 <ShieldCheck className="h-4 w-4" />
               </span>
-              <span className="text-base font-bold tracking-tight">Digital Safety Hub</span>
+              <span className="text-base font-bold tracking-tight">ThreatLens AI</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
               A free tool that helps everyday users check suspicious messages, links, screenshots, and QR codes before acting.

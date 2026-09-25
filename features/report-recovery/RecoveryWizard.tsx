@@ -209,7 +209,7 @@ export function RecoveryWizard() {
     const attachmentLines = source.attachments.length > 0
       ? `\n\nATTACHED EVIDENCE:\n${source.attachments.map((a) => `- ${a.name}`).join("\n")}`
       : '';
-    return `INCIDENT REPORT SUMMARY (Locally Generated)\nDate of Generation: ${new Date(source.generatedAt).toLocaleString()}\n\nCATEGORY: ${source.category}\nINCIDENT DATE: ${source.date || "Not provided"}\nPLATFORM/WEBSITE: ${source.platform || "Not provided"}\nFINANCIAL LOSS: ${source.amount || "None/Not provided"}\n\nDESCRIPTION:\n${source.description || "No description provided."}\n\nRECOMMENDED ACTION STEPS (From Digital Safety Hub):\n${(source.steps || []).map((s, i) => `${i + 1}. ${s}`).join("\n") || "No steps available."}${attachmentLines}\n\n--\nNote: This report is generated locally on your device to help you organize your thoughts before speaking to authorities or your bank. It has NOT been submitted to any agency.`;
+    return `INCIDENT REPORT SUMMARY (Locally Generated)\nDate of Generation: ${new Date(source.generatedAt).toLocaleString()}\n\nCATEGORY: ${source.category}\nINCIDENT DATE: ${source.date || "Not provided"}\nPLATFORM/WEBSITE: ${source.platform || "Not provided"}\nFINANCIAL LOSS: ${source.amount || "None/Not provided"}\n\nDESCRIPTION:\n${source.description || "No description provided."}\n\nRECOMMENDED ACTION STEPS (From ThreatLens AI):\n${(source.steps || []).map((s, i) => `${i + 1}. ${s}`).join("\n") || "No steps available."}${attachmentLines}\n\n--\nNote: This report is generated locally on your device to help you organize your thoughts before speaking to authorities or your bank. It has NOT been submitted to any agency.`;
   };
 
   const handleDownloadAttachment = (index: number) => {
@@ -343,7 +343,7 @@ export function RecoveryWizard() {
                       id="date"
                       type="date"
                       value={formData.date}
-                      onChange={e => setFormData({...formData, date: e.target.value})}
+                      onChange={e => setFormData({ ...formData, date: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
@@ -352,7 +352,7 @@ export function RecoveryWizard() {
                       id="amount"
                       placeholder="e.g. ₹5000"
                       value={formData.amount}
-                      onChange={e => setFormData({...formData, amount: e.target.value})}
+                      onChange={e => setFormData({ ...formData, amount: e.target.value })}
                     />
                   </div>
                 </div>
@@ -362,7 +362,7 @@ export function RecoveryWizard() {
                     id="platform"
                     placeholder="Where did this happen?"
                     value={formData.platform}
-                    onChange={e => setFormData({...formData, platform: e.target.value})}
+                    onChange={e => setFormData({ ...formData, platform: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
@@ -372,7 +372,7 @@ export function RecoveryWizard() {
                     placeholder="What happened? Keep it brief and factual."
                     className="resize-none"
                     value={formData.description}
-                    onChange={e => setFormData({...formData, description: e.target.value})}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">

@@ -26,7 +26,7 @@ export function Navbar() {
             </span>
 
             <span className="text-base sm:text-lg font-bold tracking-tight hidden sm:inline-block">
-              Digital Safety Hub
+              ThreatLens AI
             </span>
           </Link>
 

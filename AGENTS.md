@@ -1,9 +1,8 @@
-
-# Digital Safety Hub — AI Development Rules
+# ThreatLens AI — AI Development Rules
 
 ## Project
 
-Digital Safety Hub is a user-friendly cybersecurity web application that helps everyday users check suspicious messages, URLs, screenshots, and QR codes, understand potential risks, and receive actionable safety or recovery guidance.
+ThreatLens AI is a user-friendly cybersecurity web application that helps everyday users check suspicious messages, URLs, screenshots, and QR codes, understand potential risks, and receive actionable safety or recovery guidance.
 
 The goal is to build a simple, reliable, polished hackathon MVP. Prefer working and understandable solutions over unnecessary complexity.
 

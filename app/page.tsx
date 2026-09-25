@@ -42,22 +42,22 @@ const trustPoints = [
 export default function Home() {
   const [communityCount, setCommunityCount] = useState(0);
 
- useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const { count, error } = await supabase
-        .from("scam_reports")
-        .select("*", { count: "exact", head: true });
-      if (!error && count !== null) {
-        setCommunityCount(count);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { count, error } = await supabase
+          .from("scam_reports")
+          .select("*", { count: "exact", head: true });
+        if (!error && count !== null) {
+          setCommunityCount(count);
+        }
+      } catch (error) {
+        console.error(error);
       }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+    };
 
-  fetchData();
-}, []);
+    fetchData();
+  }, []);
 
   const stats = [
     { value: "6", label: "Content types", icon: FileCheck2, color: "text-primary" },
@@ -159,7 +159,7 @@ export default function Home() {
         <PageContainer>
           <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-14">
             <div className="max-w-xl">
-              <h2 className="text-3xl font-bold tracking-tight mb-3">How Digital Safety Hub works</h2>
+              <h2 className="text-3xl font-bold tracking-tight mb-3">How ThreatLens AI works</h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
                 We&apos;ve simplified digital threat analysis so anyone can protect themselves — no technical expertise needed.
               </p>

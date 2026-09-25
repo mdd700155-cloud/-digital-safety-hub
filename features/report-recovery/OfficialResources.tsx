@@ -149,7 +149,7 @@ export function OfficialResources({ compact = false }: OfficialResourcesProps) {
         </div>
 
         <p className="text-xs text-muted-foreground mt-4 text-center">
-          These links open official government websites (cybercrime.gov.in). Digital Safety Hub does not submit your data to these sites.
+          These links open official government websites (cybercrime.gov.in). ThreatLens AI does not submit your data to these sites.
         </p>
       </div>
     </div>

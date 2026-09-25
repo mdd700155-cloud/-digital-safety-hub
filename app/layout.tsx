@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Digital Safety Hub",
+  title: "ThreatLens AI",
   description: "Check suspicious messages, URLs, screenshots, and QR codes.",
 };
 

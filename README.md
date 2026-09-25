@@ -1,6 +1,6 @@
-# Digital Safety Hub 🛡️
+# ThreatLens AI 🛡️
 
-Digital Safety Hub is a user-friendly cybersecurity platform that helps people check suspicious links, messages, screenshots, QR codes, emails, and voice recordings, detect AI-generated deepfake voices and images, understand why something may be dangerous, and take the right steps if they have been scammed.
+ThreatLens AI is a user-friendly cybersecurity platform that helps people check suspicious links, messages, screenshots, QR codes, emails, and voice recordings, detect AI-generated deepfake voices and images, understand why something may be dangerous, and take the right steps if they have been scammed.
 
 The goal is simple:
 
@@ -10,11 +10,11 @@ The goal is simple:
 
 ## 🤖 AI Models & Detection Engines Used
 
-Digital Safety Hub employs a multi-layered detection architecture combining large multimodal AI models, local machine learning classifiers, deterministic digital signal processing (DSP), computer vision heuristics, and real-time threat intelligence feeds.
+ThreatLens AI employs a multi-layered detection architecture combining large multimodal AI models, local machine learning classifiers, deterministic digital signal processing (DSP), computer vision heuristics, and real-time threat intelligence feeds.
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────┐
-│                            DIGITAL SAFETY HUB ENGINES                       │
+│                            ThreatLens AI ENGINES                       │
 ├───────────────────────┬──────────────────────────────┬───────────────────────┤
 │ 1. AI & LLMs          │ 2. Local ML & Classifiers    │ 3. Signal Processing  │
 │ • Gemini 3.6 Flash    │ • 17-Feature URL ML Model    │ • Web Audio API DSP   │
@@ -34,18 +34,19 @@ Digital Safety Hub employs a multi-layered detection architecture combining larg
 
 The platform avoids relying solely on cloud AI APIs by deploying **real local machine learning and deterministic DSP/CV models** that execute locally with zero latency, zero cloud dependency, and full mathematical explainability.
 
-| Feature Area | Local Model / Algorithm | Training Dataset / Basis | Scoring Formula & Thresholds |
-| :--- | :--- | :--- | :--- |
-| **URL Phishing & Malicious Link Detection** | **Supervised Logistic Regression Classifier (v1.0)** | Trained on **235,795 real-world URLs** (165,056 train / 35,369 val / 35,370 test) | Sigmoid probability score $\sigma(z) \in [0, 1]$:<br>• $\ge 0.70$: `HIGH_RISK_SIGNAL`<br>• $0.50 - 0.69$: `SUSPICIOUS_SIGNAL`<br>• $< 0.50$: `LOW_RISK_SIGNAL` |
-| **Synthetic Voice & Audio Deepfake Detection** | **Multi-Feature Acoustic DSP Model (Web Audio API)** | Fundamental frequency ($F_0$) Autocorrelation, Wiener Entropy, HNR | Suspicion-Weighted Ensemble Score ($0 - 100\%$):<br>• $\ge 60\%$: `LIKELY_SYNTHETIC`<br>• $30\% - 59\%$: `UNCERTAIN`<br>• $< 30\%$: `LIKELY_AUTHENTIC` |
-| **Deepfake Face & Image Detection** | **Center-Symmetric Local Binary Pattern (CS-LBP) + Laplacian Variance** | Micro-texture entropy & second-order spatial luminance derivatives | Suspicion-Weighted Ensemble Score ($0 - 100\%$):<br>• $\ge 60\%$: `LIKELY_SYNTHETIC`<br>• $30\% - 59\%$: `UNCERTAIN`<br>• $< 30\%$: `LIKELY_AUTHENTIC` |
-| **Central Risk Aggregator** | **Weighted Multi-Signal Linear Scoring Engine** | Tiered Evidence Matrix (Threat Intel > Heuristics > LLM) | Heuristic Score $\sum w_i$:<br>• $\text{STRONG} = 3.0$<br>• $\text{MODERATE} = 2.0$<br>• $\text{WEAK} = 0.5$ |
+| Feature Area                                   | Local Model / Algorithm                                                 | Training Dataset / Basis                                                          | Scoring Formula & Thresholds                                                                                                                                   |
+| :--------------------------------------------- | :---------------------------------------------------------------------- | :-------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **URL Phishing & Malicious Link Detection**    | **Supervised Logistic Regression Classifier (v1.0)**                    | Trained on **235,795 real-world URLs** (165,056 train / 35,369 val / 35,370 test) | Sigmoid probability score $\sigma(z) \in [0, 1]$:<br>• $\ge 0.70$: `HIGH_RISK_SIGNAL`<br>• $0.50 - 0.69$: `SUSPICIOUS_SIGNAL`<br>• $< 0.50$: `LOW_RISK_SIGNAL` |
+| **Synthetic Voice & Audio Deepfake Detection** | **Multi-Feature Acoustic DSP Model (Web Audio API)**                    | Fundamental frequency ($F_0$) Autocorrelation, Wiener Entropy, HNR                | Suspicion-Weighted Ensemble Score ($0 - 100\%$):<br>• $\ge 60\%$: `LIKELY_SYNTHETIC`<br>• $30\% - 59\%$: `UNCERTAIN`<br>• $< 30\%$: `LIKELY_AUTHENTIC`         |
+| **Deepfake Face & Image Detection**            | **Center-Symmetric Local Binary Pattern (CS-LBP) + Laplacian Variance** | Micro-texture entropy & second-order spatial luminance derivatives                | Suspicion-Weighted Ensemble Score ($0 - 100\%$):<br>• $\ge 60\%$: `LIKELY_SYNTHETIC`<br>• $30\% - 59\%$: `UNCERTAIN`<br>• $< 30\%$: `LIKELY_AUTHENTIC`         |
+| **Central Risk Aggregator**                    | **Weighted Multi-Signal Linear Scoring Engine**                         | Tiered Evidence Matrix (Threat Intel > Heuristics > LLM)                          | Heuristic Score $\sum w_i$:<br>• $\text{STRONG} = 3.0$<br>• $\text{MODERATE} = 2.0$<br>• $\text{WEAK} = 0.5$                                                   |
 
 ---
 
 ### Detailed Breakdown of Local Models & Scoring
 
 #### 1. Local Machine Learning URL Classifier
+
 - **Model Type**: Supervised Logistic Regression Classifier (`lib/security/models/ml_model.json`).
 - **Trained Dataset**: 235,795 labeled benign and malicious URLs.
 - **Mathematical Scoring Formula**:
@@ -71,6 +72,7 @@ The platform avoids relying solely on cloud AI APIs by deploying **real local ma
 ---
 
 #### 2. Local DSP Audio Deepfake Detection Pipeline
+
 - **Model Type**: Multi-Parameter Digital Signal Processing (DSP) feature extraction running via the **Web Audio API**.
 - **Acoustic Features Analyzed**:
   1. **Pitch Regularity ($F_0$ Autocorrelation)**: Measures Fundamental Frequency variance across frames to detect artificial pitch flatness.
@@ -82,7 +84,7 @@ The platform avoids relying solely on cloud AI APIs by deploying **real local ma
 - **Suspicion-Weighted Ensemble Formula**:
   When combined with Gemini AI analysis, the system applies a 75% suspicion bias:
   $$\text{Final Score} = \text{round}\Big(0.75 \times \max(S_{\text{AI}}, S_{\text{Local}}) + 0.25 \times \min(S_{\text{AI}}, S_{\text{Local}})\Big)$$
-  *(If Gemini is unavailable, the local score is used directly with adjusted sensitivity thresholds).*
+  _(If Gemini is unavailable, the local score is used directly with adjusted sensitivity thresholds)._
 - **Complexity**: $O(M \cdot N \log N)$ where $M$ is the number of audio windows and $N$ is the FFT window size (2048 samples).
 - **Why this model was chosen**:
   - **Edge Processing & Privacy**: Processes voice recordings locally in the user's browser, preventing private voice data from being sent to unnecessary servers.
@@ -91,6 +93,7 @@ The platform avoids relying solely on cloud AI APIs by deploying **real local ma
 ---
 
 #### 3. Local Computer Vision Face & Image Deepfake Forensics
+
 - **Model Type**: Client-Side Canvas Image Signal Processing (ISP).
 - **Computer Vision Algorithms**:
   1. **Center-Symmetric Local Binary Patterns (CS-LBP)**: Analyzes micro-texture entropy across pixel neighborhoods to detect the unnatural skin oversmoothing and diffuse blur patterns typical of generative diffusion models.
@@ -106,6 +109,7 @@ The platform avoids relying solely on cloud AI APIs by deploying **real local ma
 ---
 
 #### 4. Central Risk Aggregator (Multi-Tier Decision Matrix)
+
 - **Model Type**: Tiered Bayesian-inspired rule and scoring aggregator (`lib/security/aggregator.ts`).
 - **Mathematical Scoring Formula**:
   $$\text{Heuristic Score} = \sum_{s \in \text{Signals}} \text{Weight}(s)$$
@@ -121,6 +125,7 @@ The platform avoids relying solely on cloud AI APIs by deploying **real local ma
 ---
 
 ### 5. Google Gemini Multimodal Generative AI
+
 - **Models Used**: `gemini-3.6-flash`, `gemini-3.5-flash`, `gemini-flash-latest` (with automatic failover retry architecture).
 - **Core Applications**:
   - **Contextual Scam Analysis**: Evaluates conversational nuance, psychological urgency, social engineering tactics, impersonation of banks/government bodies, and fraudulent OTP/payment requests.
@@ -135,6 +140,7 @@ The platform avoids relying solely on cloud AI APIs by deploying **real local ma
 ---
 
 ### 6. Email Forensics & Protocol Verification Engine
+
 - **Engines**:
   - **RFC 2822 / 5322 Parser**: Extracts headers, `From`, `Return-Path`, and unrolls the entire `Received` MTA transit chain.
   - **SPF Verification (RFC 7208)**: Direct DNS TXT queries against the sender domain to verify originating IP authorization.
@@ -149,6 +155,7 @@ The platform avoids relying solely on cloud AI APIs by deploying **real local ma
 ---
 
 ### 7. Threat Intelligence Feed (URLhaus)
+
 - **Architecture**: Real-time HTTP API integration with abuse.ch's URLhaus database.
 - **Complexity**: Time $O(1)$ query lookup with a strict 5-second timeout and graceful fail-open fallback, Space $O(1)$ memory.
 - **Why this model was chosen**:
@@ -159,27 +166,35 @@ The platform avoids relying solely on cloud AI APIs by deploying **real local ma
 ## 🚀 Key Features
 
 ### 🔍 Unified Scam Check
+
 Users can paste text, links, or raw email headers, upload screenshots or `.eml` files, or scan QR codes in a single unified interface.
+
 - 🟢 **Safe / No Obvious Threat** — No significant threat indicators detected.
 - 🟡 **Suspicious** — Indicators found; exercise caution.
 - 🔴 **High Risk** — Strong evidence of malicious activity detected.
 
 ### 📧 Email Forensics
+
 Upload `.eml` files or paste raw email headers to get a full forensic breakdown: SPF/DKIM/DMARC authentication checks, sender IP geolocation, domain age verification via RDAP, and SMTP relay path reconstruction.
 
 ### 🎙️ Synthetic Voice Detection
+
 Upload or record audio to detect whether a voice is authentic or generated by an AI clone. Uses multi-feature acoustic DSP analysis (pitch regularity, spectral flatness, HNR, ZCR, spectral contrast, formant consistency) combined with Gemini AI for a suspicion-weighted ensemble score.
 
 ### 🖼️ Deepfake Face & Image Detection
+
 Upload portrait photos or face images to analyze for synthetic generation, facial manipulation, or diffusion artifacts. Uses CS-LBP micro-texture analysis, Laplacian variance, and color channel covariance combined with Gemini AI multimodal vision.
 
 ### 🚨 Report & Recover
+
 Guided step-by-step assistance for scam victims, including evidence preservation checklists, incident summary generation, and direct links to official reporting portals (e.g. cybercrime.gov.in / 1930).
 
 ### 📚 Safety Hub
+
 Interactive educational guides covering common scam patterns, phishing techniques, and digital safety best practices to help users recognize emerging threats.
 
 ### 🌐 ScamWatch Community Feed
+
 Community-reported scam trends powered by Supabase. Users can submit and browse real scam reports to help others recognize the same patterns.
 
 ---
@@ -201,10 +216,12 @@ Community-reported scam trends powered by Supabase. Users can submit and browse 
 ## 🏁 Getting Started
 
 ### Prerequisites
+
 - Node.js 18+
 - npm / yarn / pnpm
 
 ### Environment Variables
+
 Create a `.env.local` file in the root directory:
 
 ```env
@@ -285,14 +302,14 @@ tools/
 
 ## 📄 Route Map
 
-| Route | Description |
-| :--- | :--- |
-| `/` | Home page with hero section and embedded scam checker |
-| `/check` | Full scam check page (General, Audio, Deepfake Image tabs) |
-| `/report` | Report & Recover wizard for scam victims |
-| `/learn` | Safety Hub — educational guides and scam pattern recognition |
-| `/scamwatch` | Community ScamWatch feed — browse and submit scam reports |
-| `/api/analyze` | POST — General analysis (text, URL, email, screenshot) |
-| `/api/analyze/voice` | POST — Voice scam analysis (multipart audio upload) |
-| `/api/analyze/deepfake` | POST — Audio deepfake detection |
-| `/api/analyze/deepfake-image` | POST — Image deepfake detection |
+| Route                         | Description                                                  |
+| :---------------------------- | :----------------------------------------------------------- |
+| `/`                           | Home page with hero section and embedded scam checker        |
+| `/check`                      | Full scam check page (General, Audio, Deepfake Image tabs)   |
+| `/report`                     | Report & Recover wizard for scam victims                     |
+| `/learn`                      | Safety Hub — educational guides and scam pattern recognition |
+| `/scamwatch`                  | Community ScamWatch feed — browse and submit scam reports    |
+| `/api/analyze`                | POST — General analysis (text, URL, email, screenshot)       |
+| `/api/analyze/voice`          | POST — Voice scam analysis (multipart audio upload)          |
+| `/api/analyze/deepfake`       | POST — Audio deepfake detection                              |
+| `/api/analyze/deepfake-image` | POST — Image deepfake detection                              |
